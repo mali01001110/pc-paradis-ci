@@ -1,0 +1,6 @@
+pytest==9.0.3
+pytest-django==4.11.1
+pytest-cov==6.0.0
+factory-boy==3.3.1
+model-bakery==1.19.2
+faker==33.1.0

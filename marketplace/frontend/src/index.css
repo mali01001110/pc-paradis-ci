@@ -1,0 +1,57 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-white dark:bg-[#0f0a1e] text-gray-900 dark:text-gray-100 font-sans antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Space Grotesk', 'Inter', sans-serif;
+  }
+
+  ::selection {
+    @apply bg-primary-200 dark:bg-primary-800 text-primary-950 dark:text-primary-100;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-primary-600 hover:bg-primary-700
+           text-white font-semibold px-4 py-2.5 transition-all duration-200
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500
+           focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-primary-300
+           dark:border-primary-700 text-primary-700 dark:text-primary-300 font-semibold
+           px-4 py-2.5 transition-all duration-200 hover:bg-primary-50 dark:hover:bg-primary-950/50
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500
+           focus-visible:ring-offset-2;
+  }
+
+  .input-field {
+    @apply w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900
+           px-3.5 py-2.5 text-sm placeholder-gray-400
+           focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20
+           focus:outline-none transition-colors duration-200;
+  }
+
+  .card {
+    @apply bg-white dark:bg-gray-900 rounded-card border border-gray-200 dark:border-gray-800
+           shadow-card;
+  }
+
+  .section-title {
+    @apply text-2xl md:text-3xl font-bold text-gray-900 dark:text-white font-display;
+  }
+}

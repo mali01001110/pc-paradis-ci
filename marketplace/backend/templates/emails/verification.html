@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f4f7; margin: 0; padding: 24px; color: #1f2937; }
+        .card { background: #ffffff; max-width: 520px; margin: 0 auto; border-radius: 12px; overflow: hidden; }
+        .header { background: #6d28d9; color: #ffffff; padding: 24px; }
+        .body { padding: 28px; }
+        .btn { display: inline-block; background: #6d28d9; color: #ffffff; padding: 12px 24px;
+                border-radius: 8px; text-decoration: none; font-weight: 600; }
+        .muted { color: #6b7280; font-size: 13px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="header">
+            <h1 style="margin:0;">Bienvenue sur {{ platform_name }}</h1>
+        </div>
+        <div class="body">
+            <p>Bonjour{% if first_name %} {{ first_name }}{% endif %},</p>
+            <p>Merci de créer votre espace vendeur. Pour activer votre compte, veuillez confirmer votre adresse email :</p>
+            <p style="text-align:center; margin:28px 0;">
+                <a class="btn" href="{{ verify_url }}">CONFIRMER MON EMAIL</a>
+            </p>
+            <p class="muted">Ce lien expire dans {{ expires_hours }} heure(s).</p>
+            <p class="muted">Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.</p>
+        </div>
+    </div>
+</body>
+</html>
