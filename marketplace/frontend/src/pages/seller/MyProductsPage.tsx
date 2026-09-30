@@ -1,22 +1,28 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { PlusCircle, Eye, Pencil, Trash2, Package, ImageOff } from 'lucide-react'
-import { productService, formatPrice } from '@/services/productService'
+import { PlusCircle, Pencil, Trash2, Package } from 'lucide-react'
+import { productService } from '@/services/productService'
 import { getErrorMessage } from '@/services/api'
+import { useToast } from '@/components/ui/Toast'
+import { Dialog, DialogContent } from '@/components/ui/Dialog'
+import { Button } from '@/components/ui/Button'
+import { Badge, type BadgeProps } from '@/components/ui/Badge'
+import { Price } from '@/components/ui/Price'
 import type { Product } from '@/types/product'
 
-const STATUS_STYLES: Record<string, string> = {
-  AVAILABLE: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400',
-  SOLD: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
-  HIDDEN: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
-  PENDING_REVIEW: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400',
-  REJECTED: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400',
+const STATUS_VARIANTS: Record<string, BadgeProps['variant']> = {
+  AVAILABLE: 'success',
+  SOLD: 'neutral',
+  HIDDEN: 'neutral',
+  PENDING_REVIEW: 'warning',
+  REJECTED: 'danger',
 }
 
 export default function MyProductsPage() {
   const queryClient = useQueryClient()
-  const [error, setError] = useState('')
+  const toast = useToast()
+  const [pendingDelete, setPendingDelete] = useState<Product | null>(null)
 
   const { data, isLoading } = useQuery({
     queryKey: ['my-products'],
@@ -26,16 +32,15 @@ export default function MyProductsPage() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => productService.deleteMyProduct(id),
     onSuccess: () => {
-      setError('')
+      toast.success('Produit supprimé.')
+      setPendingDelete(null)
       queryClient.invalidateQueries({ queryKey: ['my-products'] })
     },
-    onError: (err) => setError(getErrorMessage(err)),
+    onError: (err) => toast.error(getErrorMessage(err)),
   })
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('Supprimer ce produit ? Cette action est irreversible.')) {
-      deleteMutation.mutate(id)
-    }
+  const confirmDelete = () => {
+    if (pendingDelete) deleteMutation.mutate(pendingDelete.id)
   }
 
   if (isLoading) {
@@ -58,12 +63,6 @@ export default function MyProductsPage() {
           Ajouter un produit
         </Link>
       </div>
-
-      {error && (
-        <div className="mb-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-3 text-sm text-red-700 dark:text-red-400">
-          {error}
-        </div>
-      )}
 
       {products.length === 0 ? (
         <div className="card p-12 text-center">
@@ -97,22 +96,14 @@ export default function MyProductsPage() {
                   <h3 className="font-semibold text-gray-900 dark:text-white truncate">
                     {product.title}
                   </h3>
-                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_STYLES[product.status] ?? ''}`}>
+                  <Badge variant={STATUS_VARIANTS[product.status] ?? 'neutral'}>
                     {product.status_display}
-                  </span>
+                  </Badge>
                 </div>
                 <div className="text-sm text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-3 flex-wrap">
-                  <span className="font-semibold text-primary-600 dark:text-primary-400">
-                    {formatPrice(product.price)} FCFA
-                  </span>
+                  <Price value={product.price} className="text-primary-600 dark:text-primary-400" />
                   <span>{product.condition_display}</span>
                   {product.brand_name && <span>{product.brand_name}</span>}
-                  <span className="inline-flex items-center gap-1">
-                    <Eye size={13} /> {product.views_count}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <Package size={13} /> {product.images?.length ?? 0} photo{(product.images?.length ?? 0) === 1 ? '' : 's'}
-                  </span>
                 </div>
               </div>
 
@@ -125,9 +116,8 @@ export default function MyProductsPage() {
                   <Pencil size={14} /> Modifier
                 </Link>
                 <button
-                  onClick={() => handleDelete(product.id)}
-                  disabled={deleteMutation.isPending}
-                  className="px-3 py-2 rounded-lg text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors inline-flex items-center gap-1.5 disabled:opacity-50"
+                  onClick={() => setPendingDelete(product)}
+                  className="text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg px-3 py-2 transition-colors inline-flex items-center gap-1.5"
                 >
                   <Trash2 size={15} /> Supprimer
                 </button>
@@ -136,6 +126,28 @@ export default function MyProductsPage() {
           ))}
         </div>
       )}
+
+      {/* Confirmation de suppression */}
+      <Dialog
+        open={!!pendingDelete}
+        onOpenChange={(open) => {
+          if (!open) setPendingDelete(null)
+        }}
+      >
+        <DialogContent
+          title="Supprimer le produit"
+          description={`« ${pendingDelete?.title ?? ''} » sera retiré de la vente. Cette action est irréversible.`}
+        >
+          <div className="flex justify-end gap-3 mt-6">
+            <Button variant="ghost" onClick={() => setPendingDelete(null)}>
+              Annuler
+            </Button>
+            <Button variant="danger" onClick={confirmDelete} disabled={deleteMutation.isPending}>
+              <Trash2 size={15} /> Supprimer
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

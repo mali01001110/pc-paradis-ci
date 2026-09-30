@@ -99,14 +99,14 @@ export default function LoginPage() {
         {step === 'login' ? (
           <form onSubmit={loginForm.handleSubmit(onLogin)} className="card p-6 space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
-              <input {...loginForm.register('email')} type="email" className="input-field" placeholder="vendeur@exemple.ci" />
+              <label htmlFor="login-email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+              <input id="login-email" {...loginForm.register('email')} type="email" className="input-field" placeholder="vendeur@exemple.ci" />
               {loginForm.formState.errors.email && <p className="mt-1 text-xs text-red-500">{loginForm.formState.errors.email.message}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mot de passe</label>
+              <label htmlFor="login-password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mot de passe</label>
               <div className="relative">
-                <input {...loginForm.register('password')} type={showPw ? 'text' : 'password'} className="input-field pr-10" />
+                <input id="login-password" {...loginForm.register('password')} type={showPw ? 'text' : 'password'} className="input-field pr-10" />
                 <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                   {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -120,8 +120,8 @@ export default function LoginPage() {
         ) : (
           <form onSubmit={mfaForm.handleSubmit(onMFA)} className="card p-6 space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Code à 6 chiffres</label>
-              <input {...mfaForm.register('code')} className="input-field text-center text-2xl tracking-widest font-mono" placeholder="000000" maxLength={6} />
+              <label htmlFor="mfa-code" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Code à 6 chiffres</label>
+              <input id="mfa-code" {...mfaForm.register('code')} className="input-field text-center text-2xl tracking-widest font-mono" placeholder="000000" maxLength={6} />
               {mfaForm.formState.errors.code && <p className="mt-1 text-xs text-red-500">{mfaForm.formState.errors.code.message}</p>}
             </div>
             <button type="submit" className="btn-primary w-full py-3" disabled={mfaForm.formState.isSubmitting}>

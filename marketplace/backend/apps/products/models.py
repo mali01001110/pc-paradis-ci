@@ -7,6 +7,8 @@ Images are stored externally (S3/R2 in prod, local volume in dev) — never in D
 import uuid
 
 from django.conf import settings
+from django.contrib.postgres.indexes import GinIndex
+from django.contrib.postgres.search import SearchVectorField
 from django.db import models
 from django.utils.text import slugify
 
@@ -30,6 +32,8 @@ class ProductStatus(models.TextChoices):
 
 class Currency(models.TextChoices):
     FCFA = "FCFA", "FCFA"
+    EUR = "EUR", "EUR"
+    USD = "USD", "USD"
 
 
 class Product(models.Model):
@@ -60,6 +64,17 @@ class Product(models.Model):
 
     views_count = models.PositiveIntegerField(default=0)
 
+    # Soft delete (spec §42): deleted listings stay in DB for restore/audit.
+    is_deleted = models.BooleanField("Supprimé", default=False, db_index=True)
+    deleted_at = models.DateTimeField("Supprimé le", null=True, blank=True)
+
+    # PostgreSQL Full Text Search vector (updated via signals, spec §29)
+    search_vector = SearchVectorField(null=True, blank=True)
+
+    # Denormalized dynamic-attribute text ("vram VRAM 16" ...) kept in sync by
+    # signals so FTS (and the SQLite icontains fallback) can search values (§29).
+    attributes_text = models.TextField("Caractéristiques (index)", blank=True, default="")
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -70,6 +85,7 @@ class Product(models.Model):
         indexes = [
             models.Index(fields=["status", "category"]),
             models.Index(fields=["status", "-created_at"]),
+            GinIndex(fields=["search_vector"], name="product_search_gin"),
         ]
 
     def __str__(self):

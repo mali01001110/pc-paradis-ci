@@ -169,3 +169,37 @@ def verify_password_reset_code(seller: Seller, code: str) -> bool:
     latest.used = True
     latest.save(update_fields=["used"])
     return True
+
+
+def send_suspension_email(seller: Seller, action: str, reason: str = "") -> None:
+    """Email a seller about suspension / ban / reinstatement (spec §44)."""
+    subjects_map = {
+        "suspend": f"Votre compte a été suspendu — {settings.PLATFORM_NAME}",
+        "unsuspend": f"Votre compte est réactivé — {settings.PLATFORM_NAME}",
+        "ban": f"Votre compte a été banni — {settings.PLATFORM_NAME}",
+    }
+    subject = subjects_map.get(action, f"Mise à jour de votre compte — {settings.PLATFORM_NAME}")
+    context = {
+        "platform_name": settings.PLATFORM_NAME,
+        "frontend_url": settings.FRONTEND_URL,
+        "first_name": seller.first_name,
+        "action": action,
+        "reason": reason,
+    }
+    html = render_to_string("emails/suspension.html", context)
+    send_mail(subject, "", settings.DEFAULT_FROM_EMAIL, [seller.email], html_message=html)
+
+
+def send_new_login_email(seller: Seller, ip: str = "", user_agent: str = "") -> None:
+    """Email a seller when a new login occurs (spec §44)."""
+    subject = f"Nouvelle connexion détectée — {settings.PLATFORM_NAME}"
+    context = {
+        "platform_name": settings.PLATFORM_NAME,
+        "first_name": seller.first_name,
+        "login_time": timezone.now().strftime("%d/%m/%Y à %H:%M"),
+        "ip": ip[:45] if ip else "inconnue",
+        "user_agent": user_agent[:120] if user_agent else "inconnu",
+        "reset_url": f"{settings.FRONTEND_URL}/auth/password-reset",
+    }
+    html = render_to_string("emails/new_login.html", context)
+    send_mail(subject, "", settings.DEFAULT_FROM_EMAIL, [seller.email], html_message=html)

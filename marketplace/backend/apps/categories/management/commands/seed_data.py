@@ -167,6 +167,7 @@ ATTRIBUTES = {
     "ecrans": _attrs(
         ("size", "Taille", "number", 'pouces', None, True, True),
         ("resolution", "R\u00e9solution", "select", "", ["1920x1080", "2560x1440", "3840x2160", "2560x1080", "3440x1440", "Autre"], True, True),
+        ("aspect_ratio", "Ratio", "select", "", ["16:9", "21:9", "16:10", "4:3", "32:9"], False, True),
         ("refresh_rate", "Fr\u00e9quence", "number", "Hz", None, True, True),
         ("panel_type", "Type de dalle", "select", "", ["IPS", "VA", "TN", "OLED"], True, True),
         ("response_time", "Temps de r\u00e9ponse", "number", "ms", None, False, False),
@@ -218,5 +219,113 @@ ATTRIBUTES = {
         ("usb_c", "USB-C", "boolean", "", None, False, True),
         ("glass_panel", "Panneau en verre tremp\u00e9", "boolean", "", None, False, True),
         ("dimensions", "Dimensions", "text", "", None, False, False),
+    ),
+    # --- Fans ---
+    "ventilateurs": _attrs(
+        ("size", "Format", "select", "mm", ["120", "140", "200"], True, True),
+        ("quantity", "Nombre de ventilateurs", "number", "", None, True, False),
+        ("rgb", "RGB", "boolean", "", None, False, True),
+        ("airflow", "D\u00e9bit", "text", "", None, False, False),
+        ("noise", "Niveau sonore", "text", "dB", None, False, False),
+    ),
+    # --- Watercooling ---
+    "watercooling": _attrs(
+        ("type", "Type", "select", "", ["AIO", "Custom loop", "Semi-custom"], True, True),
+        ("radiator_size", "Taille radiator", "select", "mm", ["240", "280", "360", "420"], True, True),
+        ("socket_compatible", "Socket compatible", "text", "", None, True, True),
+        ("pump_included", "Pompe incluse", "boolean", "", None, False, False),
+        ("rgb", "RGB", "boolean", "", None, False, True),
+    ),
+    # --- CPU Cooling ---
+    "refroidissement-cpu": _attrs(
+        ("type", "Type", "select", "", ["Air (tower)", "AIO", "Low-profile"], True, True),
+        ("socket", "Socket compatible", "text", "", None, True, True),
+        ("heatpipes", "Nombre de heatpipes", "number", "", None, False, False),
+        ("tdp_support", "TDP support\u00e9", "number", "W", None, False, True),
+        ("height", "Hauteur", "number", "mm", None, False, False),
+        ("rgb", "RGB", "boolean", "", None, False, True),
+    ),
+    # --- Racing Wheels ---
+    "volants": _attrs(
+        ("platform", "Plateforme", "text", "", None, True, True),
+        ("force_feedback", "Retour de force", "boolean", "", None, False, False),
+        ("pedals_included", "P\u00e9dales incluses", "boolean", "", None, False, False),
+        ("connection", "Connexion", "select", "", ["USB", "Bluetooth", "Wired", "Sans fil"], True, True),
+        ("rotation", "Angle de rotation", "number", "\u00b0", None, False, False),
+    ),
+    # --- Joysticks ---
+    "joysticks": _attrs(
+        ("platform", "Plateforme", "text", "", None, True, True),
+        ("num_axes", "Nombre d'axes", "number", "", None, True, False),
+        ("hotas", "HOTAS", "boolean", "", None, False, False),
+        ("connection", "Connexion", "select", "", ["USB", "Bluetooth", "Sans fil"], True, True),
+    ),
+    # --- Mousepads ---
+    "tapis-de-souris": _attrs(
+        ("size", "Taille", "select", "", ["S", "M", "L", "XL", "XXL"], True, True),
+        ("rgb", "RGB", "boolean", "", None, False, True),
+        ("surface", "Surface", "select", "", ["Tissu", "Hard", "Hybride"], True, True),
+        ("base", "Base", "select", "", ["Caoutchouc", "Aluminium", "Silicone"], True, True),
+        ("waterproof", "Imperm\u00e9able", "boolean", "", None, False, False),
+    ),
+    # --- Gaming Chairs ---
+    "chaises-gaming": _attrs(
+        ("max_height", "Taille max utilisateur", "number", "cm", None, True, True),
+        ("max_load", "Charge max", "number", "kg", None, False, False),
+        ("recline", "Inclinaison max", "number", "\u00b0", None, False, False),
+        ("armrests", "Accoudoirs ajustables", "select", "", ["2D", "3D", "4D", "Non"], True, True),
+        ("lumbar", "Support lombaire", "boolean", "", None, False, False),
+        ("material", "Mat\u00e9riau", "select", "", ["Tissu", "Mesh", "Cuir synth\u00e9tique", "Cuir v\u00e9ritable"], False, False),
+    ),
+    # --- Microphones ---
+    "microphones": _attrs(
+        ("type", "Type", "select", "", ["USB", "XLR", "USB-C"], True, True),
+        ("condenser", "Condenser", "boolean", "", None, False, False),
+        ("polar_pattern", "Polar pattern", "select", "", ["Cardioid", "Omnidirectional", "Bidirectional", "Stereo"], True, True),
+        ("plug_and_play", "Plug and play", "boolean", "", None, False, False),
+        ("sample_rate", "Fr\u00e9quence d'\u00e9chantillonnage", "text", "kHz", None, False, False),
+    ),
+    # --- Webcams ---
+    "webcams": _attrs(
+        ("resolution", "R\u00e9solution", "select", "", ["720p", "1080p", "1440p", "4K"], True, True),
+        ("framerate", "Images par seconde", "select", "fps", ["30", "60", "120"], True, True),
+        ("fov", "Champ de vision", "select", "\u00b0", ["65", "78", "90", "120"], False, True),
+        ("mic", "Microphone int\u00e9gr\u00e9", "boolean", "", None, False, False),
+        ("connection", "Connexion", "select", "", ["USB-A", "USB-C", "Bluetooth"], True, True),
+    ),
+    # --- Cables ---
+    "cables": _attrs(
+        ("cable_type", "Type de c\u00e2ble", "select", "", ["USB-A", "USB-C", "HDMI", "DisplayPort", "Ethernet", "Audio 3.5mm", "Autre"], True, True),
+        ("length", "Longueur", "number", "m", None, True, True),
+        ("version_usb", "Version USB", "select", "", ["USB 2.0", "USB 3.0", "USB 3.1", "USB 3.2", "USB4", "N/A"], False, False),
+    ),
+    # --- RGB Cables ---
+    "cables-rgb": _attrs(
+        ("cable_type", "Type de c\u00e2ble", "select", "", ["USB-A", "USB-C", "SATA", "Autre"], True, True),
+        ("length", "Longueur", "number", "m", None, True, True),
+        ("controller", "Contr\u00f4leur inclus", "boolean", "", None, False, False),
+        ("sync", "Sync (ARGB / RGB)", "select", "", ["ARGB (3-pin)", "RGB (4-pin)", "Les deux"], False, True),
+    ),
+    # --- Adapters ---
+    "adaptateurs": _attrs(
+        ("adapter_type", "Type", "select", "", ["HDMI vers DisplayPort", "DisplayPort vers HDMI", "USB-C vers HDMI", "HDMI vers VGA", "USB-A vers USB-C", "Autre"], True, True),
+        ("directional", "Directionnel", "boolean", "", None, False, False),
+        ("length", "Longueur", "number", "m", None, False, False),
+        ("connector", "Connecteur", "text", "", None, True, True),
+    ),
+    # --- PC Accessories ---
+    "accessoires-pc": _attrs(
+        ("category", "Cat\u00e9gorie", "select", "", ["Hub USB", "Support / pied", "Bureau rise", "Organiseur c\u00e2bles", "Autre"], True, True),
+        ("material", "Mat\u00e9riau", "text", "", None, False, False),
+        ("laptop_desktop", "Pour", "select", "", ["PC Portable", "PC Bureau", "Universel"], True, True),
+    ),
+    # --- Headsets (spec §23 — casques gaming) ---
+    "casques": _attrs(
+        ("type", "Type", "select", "", ["Circum-aural", "Supra-aural", "Intra-auriculaire"], True, True),
+        ("connection", "Connexion", "select", "", ["Filaire", "Sans fil", "Filaire + sans fil"], True, True),
+        ("mic", "Microphone", "select", "", ["Integr\u00e9", "Amovible", "Aucun"], True, True),
+        ("rgb", "RGB", "boolean", "", None, False, True),
+        ("anc", "ANC (r\u00e9duction de bruit)", "boolean", "", None, False, True),
+        ("platform", "Plateforme", "text", "", None, False, True),
     ),
 }

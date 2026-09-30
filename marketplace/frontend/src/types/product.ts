@@ -19,7 +19,8 @@ export interface Product {
   model: string
   description: string
   price: number
-  currency: 'FCFA'
+  price_fcfa?: number
+  currency: 'FCFA' | 'EUR' | 'USD'
   condition: 'NEUF' | 'OCCASION' | 'RECONDITIONNE' | 'UTILISE'
   condition_display: string
   status: 'AVAILABLE' | 'SOLD' | 'HIDDEN' | 'PENDING_REVIEW' | 'REJECTED'
@@ -29,10 +30,12 @@ export interface Product {
   phone: string
   whatsapp: string
   views_count: number
+  is_deleted?: boolean
   seller_id?: string
   brand_id?: string
   category_id?: string
   brand_name?: string
+  category_name?: string
   category_slug?: string
   seller_name?: string
   images: ProductImage[]
@@ -73,6 +76,21 @@ export interface AttributeDefinition {
   required: boolean
   filterable: boolean
   sort_order: number
+}
+
+/** One filterable facet from GET /categories/<slug>/filter-options/. */
+export interface FilterOption {
+  key: string
+  label: string
+  value_type: AttributeDefinition['value_type']
+  unit: string
+  options: (string | number)[]
+  values: (string | number | boolean)[]
+}
+
+export interface FilterOptionsResponse {
+  category: string
+  filters: FilterOption[]
 }
 
 export interface Category {

@@ -1,13 +1,20 @@
 import axios, { AxiosError } from 'axios'
 import type {
   AuthTokens,
+  ChangePasswordPayload,
   LoginPayload,
   MFAPayload,
   RegisterPayload,
   ApiError,
   Seller,
   RegisterResponse,
+  SellerUpdatePayload,
 } from '@/types/auth'
+
+export interface CaptchaChallenge {
+  question: string
+  token: string
+}
 
 const API_BASE = '/api/v1'
 
@@ -32,10 +39,13 @@ apiClient.interceptors.response.use(
       const refresh = localStorage.getItem('refresh_token')
       if (refresh && !error.config?.url?.includes('/auth/')) {
         try {
-          const { data } = await axios.post(`${API_BASE}/auth/login/`, {
+          const { data } = await axios.post(`${API_BASE}/auth/token/refresh/`, {
             refresh,
           })
           localStorage.setItem('access_token', data.access)
+          if (data.refresh) {
+            localStorage.setItem('refresh_token', data.refresh)
+          }
           error.config!.headers.Authorization = `Bearer ${data.access}`
           return apiClient.request(error.config!)
         } catch {
@@ -49,11 +59,14 @@ apiClient.interceptors.response.use(
 )
 
 export const authService = {
+  getCaptchaChallenge: () =>
+    apiClient.get<CaptchaChallenge>('/auth/captcha/'),
+
   register: (payload: RegisterPayload) =>
     apiClient.post<RegisterResponse>('/auth/register/', payload),
 
   verifyEmail: (token: string) =>
-    apiClient.post('/auth/verify-email/', { token }),
+    apiClient.post(`/auth/verify-email/${token}/`),
 
   resendVerification: (email: string) =>
     apiClient.post('/auth/resend-verification/', { email }),
@@ -73,8 +86,20 @@ export const authService = {
   getMe: () =>
     apiClient.get<Seller>('/auth/me/'),
 
-  updateMe: (data: Partial<Seller>) =>
+  updateMe: (data: Partial<SellerUpdatePayload>) =>
     apiClient.patch<Seller>('/auth/me/', data),
+
+  uploadProfileImage: (field: 'logo' | 'photo', file: File) => {
+    const formData = new FormData()
+    formData.append('field', field)
+    formData.append('image', file)
+    return apiClient.post<Seller>('/auth/me/profile-image/', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+  },
+
+  changePassword: (payload: ChangePasswordPayload) =>
+    apiClient.post('/auth/password/change/', payload),
 
   enableMFA: (password: string) =>
     apiClient.post('/auth/mfa/enable/', { password }),

@@ -8,7 +8,7 @@ test.beforeEach(async ({ page }) => {
 test('homepage displays categories and products', async ({ page }) => {
   await page.goto('/')
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
-  await expect(page.getByText('ASUS ROG Strix G16 RTX 4060')).toBeVisible()
+  await expect(page.getByText('ASUS ROG Strix G16 RTX 4060').first()).toBeVisible()
 })
 
 test('search input navigates with query parameter', async ({ page }) => {
@@ -20,6 +20,6 @@ test('search input navigates with query parameter', async ({ page }) => {
 
 test('category card navigates to filtered listing', async ({ page }) => {
   await page.goto('/')
-  await page.locator('button').filter({ hasText: 'PC Portables' }).first().click()
+  await page.getByRole('link', { name: 'PC Portables' }).first().click()
   await expect(page).toHaveURL(/cat=pc-/)
 })

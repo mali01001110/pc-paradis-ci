@@ -22,7 +22,7 @@ class ReportProductView(generics.CreateAPIView):
     def post(self, request, product_slug):
         from apps.products.models import Product
 
-        product = Product.objects.filter(slug=product_slug).first()
+        product = Product.objects.filter(slug=product_slug, is_deleted=False).first()
         if not product:
             return Response(
                 {"detail": "Produit introuvable."}, status=status.HTTP_404_NOT_FOUND

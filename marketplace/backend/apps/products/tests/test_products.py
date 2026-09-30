@@ -139,7 +139,10 @@ def test_seller_delete_product(auth_client, active_seller, gpu_category, gpu_bra
     p = make_product(active_seller, gpu_category, gpu_brand)
     resp = auth_client.delete(reverse("products:my-product-detail", args=[p.id]))
     assert resp.status_code == status.HTTP_204_NO_CONTENT
-    assert not Product.objects.filter(pk=p.pk).exists()
+    # Soft delete: the row stays in DB but is flagged (spec §42).
+    p.refresh_from_db()
+    assert p.is_deleted is True
+    assert p.deleted_at is not None
 
 
 # ---------- Search & Filter ----------

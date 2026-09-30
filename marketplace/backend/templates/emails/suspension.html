@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f4f7; margin: 0; padding: 24px; color: #1f2937; }
+        .card { background: #ffffff; max-width: 520px; margin: 0 auto; border-radius: 12px; overflow: hidden; }
+        .header { background: #6d28d9; color: #ffffff; padding: 24px; }
+        .body { padding: 28px; }
+        .btn { display: inline-block; background: #6d28d9; color: #ffffff; padding: 12px 24px;
+                border-radius: 8px; text-decoration: none; font-weight: 600; }
+        .muted { color: #6b7280; font-size: 13px; }
+        .alert-danger { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; padding: 12px; border-radius: 8px; }
+        .alert-success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; padding: 12px; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="header">
+            <h1 style="margin:0;">Statut de votre compte — {{ platform_name }}</h1>
+        </div>
+        <div class="body">
+            <p>Bonjour{% if first_name %} {{ first_name }}{% endif %},</p>
+            {% if action == "suspend" %}
+            <div class="alert-danger">
+                <p>Votre compte vendeur a été <strong>suspendu</strong> par l'équipe de modération.</p>
+            </div>
+            <p>Pendant la suspension, votre boutique et vos annonces ne sont plus visibles publiquement
+               et vous ne pouvez plus vous connecter à votre espace vendeur.</p>
+            {% elif action == "ban" %}
+            <div class="alert-danger">
+                <p>Votre compte vendeur a été <strong>banni</strong> définitivement.</p>
+            </div>
+            <p>L'accès à votre espace vendeur est désormais impossible.</p>
+            {% else %}
+            <div class="alert-success">
+                <p>Votre compte vendeur a été <strong>réactivé</strong>. Bienvenue à nouveau !</p>
+            </div>
+            <p>Votre boutique et vos annonces sont à nouveau visibles publiquement.
+               Vous pouvez vous reconnecter à votre espace vendeur.</p>
+            <p style="text-align:center; margin:28px 0;">
+                <a class="btn" href="{{ frontend_url }}/auth/login">SE CONNECTER</a>
+            </p>
+            {% endif %}
+            {% if reason %}<p class="muted">Motif : {{ reason }}</p>{% endif %}
+            <p class="muted">Si vous pensez qu'il s'agit d'une erreur, contactez notre support en répondant à cet email.</p>
+        </div>
+    </div>
+</body>
+</html>

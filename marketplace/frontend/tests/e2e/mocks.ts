@@ -65,9 +65,94 @@ export const seller = {
   business_name: 'TechStore Abidjan',
   mfa_enabled: false,
   is_verified: true,
+  is_staff: true,
 }
 
 export const tokens = { access: 'e2e-access-token', refresh: 'e2e-refresh-token' }
+
+export const captcha = {
+  token: 'e2e-captcha-token',
+  question: '12 + 7',
+  answer: '19',
+}
+
+export const adminProduct = {
+  id: 'mp-1',
+  slug: 'asus-rog-strix-g16',
+  title: 'ASUS ROG Strix G16 RTX 4060',
+  model: 'G614JV',
+  price: 850000,
+  currency: 'FCFA',
+  condition: 'NEUF',
+  status: 'PENDING_REVIEW' as const,
+  city: 'Abidjan',
+  views_count: 42,
+  is_deleted: false,
+  created_at: '2026-09-01T10:00:00Z',
+  updated_at: '2026-09-01T00:00:00Z',
+  seller: { id: 's-1', email: 'vendeur@exemple.ci', business_name: 'TechStore Abidjan' },
+  category: { id: 'cat-1', name: 'PC Portables', slug: 'pc-portables' },
+  brand: { id: 'b-1', name: 'ASUS' },
+  images: [],
+}
+
+export const adminProductList = {
+  count: 1,
+  next: null,
+  previous: null,
+  results: [adminProduct],
+}
+
+export const adminStats = {
+  total_products: 1,
+  available: 0,
+  sold: 0,
+  hidden: 0,
+  pending_review: 1,
+  rejected: 0,
+  deleted: 0,
+  total_views: 42,
+  top_categories: [],
+}
+
+export const report = {
+  id: 'r-1',
+  product: 'asus-rog-strix-g16',
+  product_title: 'ASUS ROG Strix G16 RTX 4060',
+  product_slug: 'asus-rog-strix-g16',
+  reporter_email: 'client@exemple.ci',
+  reason: 'FRAUD' as const,
+  description: 'Le vendeur demande un paiement en dehors de la plateforme.',
+  status: 'OPEN' as const,
+  created_at: '2026-09-10T09:30:00Z',
+}
+
+export const reportList = {
+  count: 1,
+  next: null,
+  previous: null,
+  results: [report],
+}
+
+export const publicSeller = {
+  id: 's-1',
+  business_name: 'TechStore Abidjan',
+  first_name: 'Jean',
+  last_name: 'Kouassi',
+  city: 'Abidjan',
+  commune: 'Cocody',
+  shop_name: 'TechStore Abidjan',
+  shop_slug: 'techstore-abidjan',
+  product_count: 12,
+  created_at: '2026-01-01T00:00:00Z',
+}
+
+export const publicSellerList = {
+  count: 1,
+  next: null,
+  previous: null,
+  results: [publicSeller],
+}
 
 export async function mockApi(page: Page) {
   await page.route('**/api/v1/categories/', (route) =>

@@ -15,6 +15,7 @@ class ProductReportCreateSerializer(serializers.Serializer):
 class ProductReportSerializer(serializers.ModelSerializer):
     product_title = serializers.CharField(source="product.title", read_only=True)
     product_slug = serializers.CharField(source="product.slug", read_only=True)
+    product_category_slug = serializers.CharField(source="product.category.slug", read_only=True)
 
     class Meta:
         model = ProductReport
@@ -23,19 +24,7 @@ class ProductReportSerializer(serializers.ModelSerializer):
             "product",
             "product_title",
             "product_slug",
-            "reporter_email",
-            "reason",
-            "description",
-            "status",
-            "created_at",
-        )
-
-
-        fields = (
-            "id",
-            "product",
-            "product_title",
-            "product_slug",
+            "product_category_slug",
             "reporter_email",
             "reason",
             "description",

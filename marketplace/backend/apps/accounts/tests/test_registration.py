@@ -6,24 +6,33 @@ from rest_framework import status
 
 from apps.accounts.models import Seller, SellerStatus
 
+from .test_captcha import solve_captcha
+
+
+def register_body(**overrides):
+    base = {
+        "email": "vendeur@exemple.ci",
+        "first_name": "Jean",
+        "last_name": "Kouassi",
+        "business_name": "TechStore",
+        "phone": "+2250708091011",
+        "whatsapp": "+2250708091011",
+        "password": "S3cur3-Passw0rd!",
+        "password2": "S3cur3-Passw0rd!",
+        "terms_accepted": True,
+    }
+    base.update(overrides)
+    return base
+
+
+def post_registration(api_client, **overrides):
+    payload = {**register_body(**overrides), **solve_captcha(api_client)}
+    return api_client.post(reverse("accounts:register"), payload, format="json")
+
 
 @pytest.mark.django_db
 def test_register_creates_pending_seller_and_sends_email(api_client):
-    resp = api_client.post(
-        reverse("accounts:register"),
-        {
-            "email": "vendeur@exemple.ci",
-            "first_name": "Jean",
-            "last_name": "Kouassi",
-            "business_name": "TechStore",
-            "phone": "+2250708091011",
-            "whatsapp": "+2250708091011",
-            "password": "S3cur3-Passw0rd!",
-            "password2": "S3cur3-Passw0rd!",
-            "terms_accepted": True,
-        },
-        format="json",
-    )
+    resp = post_registration(api_client)
     assert resp.status_code == status.HTTP_201_CREATED
     seller = Seller.objects.get(email="vendeur@exemple.ci")
     assert seller.status == SellerStatus.PENDING
@@ -35,47 +44,20 @@ def test_register_creates_pending_seller_and_sends_email(api_client):
 
 @pytest.mark.django_db
 def test_register_requires_matching_passwords(api_client):
-    resp = api_client.post(
-        reverse("accounts:register"),
-        {
-            "email": "vendeur@exemple.ci",
-            "password": "S3cur3-Passw0rd!",
-            "password2": "Different-Pass!",
-            "terms_accepted": True,
-        },
-        format="json",
-    )
+    resp = post_registration(api_client, password2="Different-Pass!")
     assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
 
 @pytest.mark.django_db
 def test_register_requires_terms_acceptance(api_client):
-    resp = api_client.post(
-        reverse("accounts:register"),
-        {
-            "email": "vendeur@exemple.ci",
-            "password": "S3cur3-Passw0rd!",
-            "password2": "S3cur3-Passw0rd!",
-            "terms_accepted": False,
-        },
-        format="json",
-    )
+    resp = post_registration(api_client, terms_accepted=False)
     assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
 
 @pytest.mark.django_db
 def test_register_rejects_duplicate_email(api_client, seller_factory):
     seller_factory(email="vendeur@exemple.ci")
-    resp = api_client.post(
-        reverse("accounts:register"),
-        {
-            "email": "vendeur@exemple.ci",
-            "password": "S3cur3-Passw0rd!",
-            "password2": "S3cur3-Passw0rd!",
-            "terms_accepted": True,
-        },
-        format="json",
-    )
+    resp = post_registration(api_client, email="vendeur@exemple.ci")
     assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
 

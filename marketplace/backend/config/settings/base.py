@@ -71,6 +71,7 @@ INSTALLED_APPS = [
     "apps.products",
     "apps.contacts",
     "apps.reports",
+    "apps.analytics",
 ]
 
 MIDDLEWARE = [
@@ -175,7 +176,7 @@ REST_FRAMEWORK = {
         "rest_framework.filters.SearchFilter",
         "rest_framework.filters.OrderingFilter",
     ],
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "DEFAULT_PAGINATION_CLASS": "config.pagination.DefaultPagination",
     "PAGE_SIZE": 24,
     "DEFAULT_THROTTLE_CLASSES": [
         "rest_framework.throttling.AnonRateThrottle",
@@ -192,6 +193,13 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.URLPathVersioning",
     "DEFAULT_VERSION": "v1",
+}
+
+# Multi-currency: conversion rates to FCFA (display currency base, Étape 5)
+CURRENCY_RATES_TO_FCFA = {
+    "FCFA": "1",
+    "EUR": "655.957",
+    "USD": "590",
 }
 
 # Simple JWT

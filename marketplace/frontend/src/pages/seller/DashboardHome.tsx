@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Package, Eye, Phone, MessageCircle, PlusCircle, TrendingUp } from 'lucide-react'
+import { Package, Eye, Phone, MessageCircle, PlusCircle, TrendingUp, CheckCircle } from 'lucide-react'
 import { contactService } from '@/services/productService'
 
 export default function DashboardHome() {
@@ -10,15 +10,19 @@ export default function DashboardHome() {
   })
 
   const totalProducts = stats?.length ?? 0
-  const totalViews = (stats ?? []).reduce((acc, s) => acc + s.views_count, 0)
-  const totalPhone = (stats ?? []).reduce((acc, s) => acc + s.phone_contacts, 0)
-  const totalWhatsapp = (stats ?? []).reduce((acc, s) => acc + s.whatsapp_contacts, 0)
+  const totalViews = (stats ?? []).reduce((acc, s) => acc + (s.views_count ?? 0), 0)
+  const totalPhone = (stats ?? []).reduce((acc, s) => acc + (s.phone_contacts ?? 0), 0)
+  const totalWhatsapp = (stats ?? []).reduce((acc, s) => acc + (s.whatsapp_contacts ?? 0), 0)
+  const totalSold = (stats ?? []).filter((s) => s.status === 'SOLD').length
+  const totalActive = (stats ?? []).filter((s) => s.status === 'AVAILABLE').length
 
   const values: Record<string, string> = {
     products: String(totalProducts),
     views: totalViews.toLocaleString('fr-FR'),
     phone: String(totalPhone),
     whatsapp: String(totalWhatsapp),
+    sold: String(totalSold),
+    active: String(totalActive),
   }
 
   return (
@@ -39,13 +43,15 @@ export default function DashboardHome() {
         </Link>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      {/* Stats (spec §36: actifs, vendus, vues, clics téléphone, clics WhatsApp) */}
+      <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 mb-8">
         {[
-          { label: 'Produits publiés', value: values.products, icon: Package, color: 'text-blue-600 bg-blue-50 dark:bg-blue-900/30' },
-          { label: 'Vues totales', value: values.views, icon: TrendingUp, color: 'text-green-600 bg-green-50 dark:bg-green-900/30' },
-          { label: 'Appels reçus', value: values.phone, icon: Phone, color: 'text-purple-600 bg-purple-50 dark:bg-purple-900/30' },
+          { label: 'En ligne', value: values.active, icon: CheckCircle, color: 'text-green-600 bg-green-50 dark:bg-green-900/30' },
+          { label: 'Vendus', value: values.sold, icon: Package, color: 'text-blue-600 bg-blue-50 dark:bg-blue-900/30' },
+          { label: 'Vues totales', value: values.views, icon: TrendingUp, color: 'text-gray-600 bg-gray-100 dark:bg-gray-800' },
+          { label: 'Appels', value: values.phone, icon: Phone, color: 'text-purple-600 bg-purple-50 dark:bg-purple-900/30' },
           { label: 'WhatsApp', value: values.whatsapp, icon: MessageCircle, color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30' },
+          { label: 'Total', value: values.products, icon: Package, color: 'text-orange-600 bg-orange-50 dark:bg-orange-900/30' },
         ].map((stat) => {
           const Icon = stat.icon
           return (

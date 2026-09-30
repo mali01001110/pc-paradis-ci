@@ -180,3 +180,45 @@ def test_disable_mfa(auth_client, active_seller):
     assert resp.status_code == status.HTTP_200_OK
     active_seller.refresh_from_db()
     assert active_seller.mfa_enabled is False
+
+
+@pytest.mark.django_db
+def test_token_refresh_returns_new_access_token(api_client, active_seller):
+    login_resp = api_client.post(
+        reverse("accounts:login"),
+        {"email": active_seller.email, "password": "S3cur3-Passw0rd!"},
+        format="json",
+    )
+    refresh = login_resp.data["refresh"]
+
+    resp = api_client.post(
+        reverse("accounts:token-refresh"),
+        {"refresh": refresh},
+        format="json",
+    )
+    assert resp.status_code == status.HTTP_200_OK
+    assert "access" in resp.data
+    # ROTATE_REFRESH_TOKENS=True → a new refresh token is issued
+    assert "refresh" in resp.data
+    assert resp.data["refresh"] != refresh
+
+
+@pytest.mark.django_db
+def test_token_refresh_rejects_blacklisted_token(api_client, active_seller):
+    login_resp = api_client.post(
+        reverse("accounts:login"),
+        {"email": active_seller.email, "password": "S3cur3-Passw0rd!"},
+        format="json",
+    )
+    refresh = login_resp.data["refresh"]
+
+    first = api_client.post(
+        reverse("accounts:token-refresh"), {"refresh": refresh}, format="json"
+    )
+    assert first.status_code == status.HTTP_200_OK
+
+    # The original refresh token is blacklisted after rotation
+    second = api_client.post(
+        reverse("accounts:token-refresh"), {"refresh": refresh}, format="json"
+    )
+    assert second.status_code == status.HTTP_401_UNAUTHORIZED

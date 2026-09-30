@@ -1,5 +1,16 @@
 import { Outlet, Link, useLocation } from 'react-router-dom'
-import { Package, LayoutDashboard, PlusCircle, User, Shield, LogOut, Store } from 'lucide-react'
+import {
+  Package,
+  LayoutDashboard,
+  PlusCircle,
+  User,
+  Shield,
+  LogOut,
+  Store,
+  Phone,
+  BarChart3,
+  Settings,
+} from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 
 const NAV = [
@@ -7,8 +18,11 @@ const NAV = [
   { to: '/seller/shop', icon: Store, label: 'Ma boutique' },
   { to: '/seller/products', icon: Package, label: 'Mes produits' },
   { to: '/seller/products/new', icon: PlusCircle, label: 'Ajouter un produit' },
+  { to: '/seller/analytics', icon: BarChart3, label: 'Statistiques' },
+  { to: '/seller/contacts', icon: Phone, label: 'Contacts' },
   { to: '/seller/profile', icon: User, label: 'Mon profil' },
   { to: '/seller/security', icon: Shield, label: 'Sécurité' },
+  { to: '/seller/settings', icon: Settings, label: 'Paramètres' },
 ]
 
 export default function DashboardLayout() {
@@ -83,6 +97,15 @@ export default function DashboardLayout() {
 
         {/* Footer */}
         <div className="p-4 border-t border-gray-100 dark:border-gray-800 space-y-1">
+          {seller?.is_staff && (
+            <Link
+              to="/admin"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-primary-600 dark:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
+            >
+              <Shield size={16} />
+              Administration
+            </Link>
+          )}
           <Link to="/" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800">
             ← Retour au site
           </Link>

@@ -47,9 +47,12 @@ urlpatterns = [
     path("api/v1/", include("apps.accounts.urls", namespace="accounts")),
     path("api/v1/", include("apps.shops.urls", namespace="shops")),
     path("api/v1/", include("apps.categories.urls", namespace="categories")),
-    path("api/v1/", include("apps.products.urls", namespace="products")),
+    # contacts/reports register products/<slug>/<action>/ patterns — they must
+    # precede products so the SEO detail route does not shadow them.
     path("api/v1/", include("apps.contacts.urls", namespace="contacts")),
     path("api/v1/", include("apps.reports.urls", namespace="reports")),
+    path("api/v1/", include("apps.products.urls", namespace="products")),
+    path("api/v1/", include("apps.analytics.urls", namespace="analytics")),
 ]
 
 # OpenAPI / Swagger (hidden in production unless SHOW_API_DOCS=True)

@@ -8,11 +8,14 @@ from apps.products.models import Product
 
 
 class ReportReason(models.TextChoices):
-    FRAUD = "FRAUD", "Fraude / arnaque"
+    """Les 7 motifs de signalement du cahier des charges (§39)."""
+
     PROHIBITED = "PROHIBITED", "Produit interdit"
-    DUPLICATE = "DUPLICATE", "Annonce en double"
-    WRONG_CATEGORY = "WRONG_CATEGORY", "Mauvaise categorie"
-    OFFENSIVE = "OFFENSIVE", "Contenu inapproprie"
+    FRAUD = "FRAUD", "Fraude suspect\u00e9e"
+    FALSE_INFO = "FALSE_INFO", "Fausse information"
+    MISLEADING = "MISLEADING", "Annonce trompeuse"
+    SPAM = "SPAM", "Spam"
+    INAPPROPRIATE = "INAPPROPRIATE", "Contenu inappropri\u00e9"
     OTHER = "OTHER", "Autre"
 
 

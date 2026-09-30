@@ -23,9 +23,16 @@ class ProductSitemap(Sitemap):
     priority = 0.9
 
     def items(self):
-        return Product.objects.filter(status=ProductStatus.AVAILABLE).only("slug", "updated_at")
+        return (
+            Product.objects.filter(status=ProductStatus.AVAILABLE)
+            .select_related("category")
+            .only("slug", "updated_at", "category__slug")
+        )
 
     def location(self, obj):
+        cat_slug = getattr(obj.category, "slug", None)
+        if cat_slug:
+            return f"/products/{cat_slug}/{obj.slug}"
         return f"/products/{obj.slug}"
 
     def lastmod(self, obj):

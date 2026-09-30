@@ -2,15 +2,10 @@ import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { shopService } from '@/services/shopService'
 import { productService } from '@/services/productService'
-import { Phone, MessageCircle, MapPin, Package, Store } from 'lucide-react'
+import { Phone, MessageCircle, MapPin, Package } from 'lucide-react'
 import { getErrorMessage } from '@/services/api'
+import { normalizePhone } from '@/lib/phone'
 import ProductCard from '@/components/ProductCard'
-
-function normalizePhone(raw: string): string {
-  const digits = raw.replace(/[^\d+]/g, '')
-  if (raw.startsWith('+')) return digits
-  return `+225${digits.replace(/^\+?225/, '')}`
-}
 
 export default function ShopPage() {
   const { slug } = useParams<{ slug: string }>()
@@ -101,7 +96,7 @@ export default function ShopPage() {
           )}
           {(shop.whatsapp || shop.phone) && (
             <a
-              href={`https://wa.me/${wa.replace('+', '')}?text=${encodeURIComponent(`Bonjour, je suis intéressé par vos produits sur PC Paradis CI.`)}`}
+              href={`https://wa.me/${wa.replace('+', '')}?text=${encodeURIComponent(`Bonjour, je suis intéressé par les produits de ${shop.name} sur PC Paradis CI.`)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="btn-secondary flex-1"

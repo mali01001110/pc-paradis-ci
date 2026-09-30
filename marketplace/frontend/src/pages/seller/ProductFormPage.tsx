@@ -1,10 +1,11 @@
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { Upload, Loader2, ArrowLeft, X } from 'lucide-react'
+import { Loader2, ArrowLeft } from 'lucide-react'
 import { productService, categoryService } from '@/services/productService'
 import { getErrorMessage } from '@/services/api'
-import type { AttributeDefinition, ProductCreatePayload } from '@/types/product'
+import ImageUploadZone from '@/components/ImageUploadZone'
+import type { AttributeDefinition, ProductCreatePayload, ProductImage } from '@/types/product'
 
 const CONDITIONS = [
   { value: 'NEUF', label: 'Neuf' },
@@ -53,6 +54,10 @@ export default function ProductFormPage() {
   const [categorySlug, setCategorySlug] = useState('')
   const [attrValues, setAttrValues] = useState<Record<string, unknown>>({})
   const [imageFiles, setImageFiles] = useState<File[]>([])
+  const [deletedImages, setDeletedImages] = useState<string[]>([])
+  const [existingImages, setExistingImages] = useState<ProductImage[]>([])
+  const [deletingIds, setDeletingIds] = useState<string[]>([])
+  const [reordering, setReordering] = useState(false)
   const [error, setError] = useState('')
 
   const { data: tree } = useQuery({
@@ -96,6 +101,7 @@ export default function ProductFormPage() {
       })
       setSelectedParentId(parentId)
       setCategorySlug(product.category_slug ?? '')
+      setExistingImages(product.images ?? [])
     }
   }, [isEdit, product, tree])
 
@@ -127,7 +133,7 @@ export default function ProductFormPage() {
       }
       const productId =
         isEdit && product ? product.id : (await productService.createProduct(payload)).data.id
-      const filled = (attributes ?? []).filter((def) => {
+      const filled = visibleAttributes.filter((def) => {
         const v = attrValues[def.id]
         if (Array.isArray(v)) return v.length > 0
         return v !== undefined && v !== '' && v !== false
@@ -145,6 +151,15 @@ export default function ProductFormPage() {
       if (imageFiles.length > 0) {
         await productService.uploadImages(productId, imageFiles)
       }
+      for (const imageId of deletedImages) {
+        await productService.deleteImage(productId, imageId)
+      }
+      if (existingImages.length > 1) {
+        await productService.reorderImages(
+          productId,
+          existingImages.map((img) => img.id)
+        )
+      }
     },
     onSuccess: () => {
       void navigate('/seller/products')
@@ -152,7 +167,7 @@ export default function ProductFormPage() {
     onError: (err) => setError(getErrorMessage(err)),
   })
 
-  const missingRequired = (attributes ?? []).some((def) => {
+  const missingRequired = visibleAttributes.some((def) => {
     if (!def.required) return false
     const v = attrValues[def.id]
     if (Array.isArray(v)) return v.length === 0
@@ -194,13 +209,72 @@ export default function ProductFormPage() {
     setAttrValues({})
   }
 
-  const handleImages = (files: FileList | null) => {
-    if (!files) return
-    setImageFiles(Array.from(files).slice(0, MAX_IMAGES))
+  const handleDeleteExisting = async (imageId: string) => {
+    if (!product) return
+    setDeletingIds((prev) => [...prev, imageId])
+    try {
+      await productService.deleteImage(product.id, imageId)
+      setExistingImages((prev) => prev.filter((img) => img.id !== imageId))
+      setDeletedImages((prev) => [...prev, imageId])
+    } catch (err) {
+      setError(getErrorMessage(err))
+    } finally {
+      setDeletingIds((prev) => prev.filter((id) => id !== imageId))
+    }
+  }
+
+  const handleReorderExisting = async (order: string[]) => {
+    setReordering(true)
+    const current = [...existingImages]
+    const reordered = order
+      .map((id) => current.find((img) => img.id === id))
+      .filter((img): img is ProductImage => !!img)
+    const primaryId = reordered[0]?.id
+    const withPrimary = reordered.map((img) => ({
+      ...img,
+      is_primary: img.id === primaryId,
+    }))
+    setExistingImages(withPrimary)
+    try {
+      if (product) await productService.reorderImages(product.id, order)
+    } catch (err) {
+      setError(getErrorMessage(err))
+    } finally {
+      setReordering(false)
+    }
   }
 
   const attrLabel = (def: AttributeDefinition) =>
     `${def.label}${def.unit ? ' (' + def.unit + ')' : ''}`
+
+  /**
+   * Storage auto-hide (spec §19): fields irrelevant to the selected storage
+   * type are hidden. e.g. RPM for an NVMe SSD, PCIe gen for an HDD.
+   */
+  const STORAGE_VISIBILITY: Record<string, Record<string, string[]>> = {
+    'SSD NVMe': {
+      hidden: ['rpm'],
+    },
+    'SSD SATA': {
+      hidden: ['rpm', 'pcie_gen', 'nand'],
+    },
+    HDD: {
+      hidden: ['pcie_gen', 'read_speed', 'write_speed', 'dram', 'tbw', 'nand'],
+    },
+  }
+
+  const isAttributeVisible = (def: AttributeDefinition): boolean => {
+    const storageType = Object.entries(attrValues).find(([defId]) => {
+      const d = (attributes ?? []).find((a) => a.id === defId)
+      return d?.key === 'storage_type'
+    })?.[1] as string | undefined
+    if (!storageType || !categorySlug || categorySlug !== 'stockage') return true
+    const rule = STORAGE_VISIBILITY[storageType]
+    if (!rule) return true
+    return !rule.hidden.includes(def.key)
+  }
+
+  const visibleAttributes = (attributes ?? []).filter(isAttributeVisible)
 
   const renderAttributeField = (def: AttributeDefinition) => {
     const value = attrValues[def.id]
@@ -475,54 +549,25 @@ export default function ProductFormPage() {
               {"Aucune caractéristique définie pour cette catégorie."}
             </p>
           ) : (
-            <div className="space-y-4">{(attributes ?? []).map(renderAttributeField)}</div>
+            <div className="space-y-4">{visibleAttributes.map(renderAttributeField)}</div>
           )}
         </div>
 
         <div className="card p-6">
           <h2 className="font-semibold text-gray-900 dark:text-white mb-1">Photos</h2>
           <p className="text-sm text-gray-400 mb-3">
-            {"Jusqu'à"} {MAX_IMAGES} images (JPG, PNG, WebP).
+            {"Jusqu'à"} {MAX_IMAGES} images (JPG, PNG, WebP). La première image est la photo principale.
           </p>
-          {isEdit && product?.images && product.images.length > 0 && (
-            <div className="flex flex-wrap gap-3 mb-4">
-              {product.images.map((img) => (
-                <img
-                  key={img.id}
-                  src={img.image}
-                  alt=""
-                  className="w-20 h-20 rounded-lg object-cover border border-gray-200 dark:border-gray-700"
-                />
-              ))}
-            </div>
-          )}
-          <label className="btn-secondary inline-flex items-center gap-2 text-sm cursor-pointer">
-            <Upload size={15} />
-            Choisir des images
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              multiple
-              onChange={(e) => handleImages(e.target.files)}
-              className="hidden"
-            />
-          </label>
-          {imageFiles.length > 0 && (
-            <div className="mt-3 space-y-1.5">
-              {imageFiles.map((f, i) => (
-                <div key={f.name + f.size} className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2">
-                  <span className="truncate">{f.name}</span>
-                  <button
-                    type="button"
-                    onClick={() => setImageFiles(imageFiles.filter((_, idx) => idx !== i))}
-                    className="text-gray-400 hover:text-red-500"
-                  >
-                    <X size={15} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
+          <ImageUploadZone
+            existing={existingImages}
+            files={imageFiles}
+            maxImages={MAX_IMAGES}
+            onFilesChange={setImageFiles}
+            onDeleteExisting={handleDeleteExisting}
+            onReorderExisting={handleReorderExisting}
+            deletingIds={deletingIds}
+            reordering={reordering}
+          />
         </div>
 
         <div className="card p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">

@@ -93,10 +93,23 @@ marketplace/
 cd backend
 pytest --cov=apps
 
-# Frontend
+# Frontend (unit + composants)
 cd frontend
 npm test
 npm run typecheck
+
+# E2E (Playwright, 23 scénarios — lancement auto du dev server)
+cd frontend
+npm run test:e2e
+```
+
+Les tests E2E couvrent : inscription + captcha, vérification email, connexion + MFA, catalogue/filtres, contact produit, publication produit, modération admin, signalements et page vendeurs. Ils fonctionnent avec des APIs mockées (`tests/e2e/mocks.ts`) — aucun backend requis.
+
+### Commandes de gestion (backend)
+
+```bash
+python manage.py seed_catalogue --demo    # Catégories + marques + caractéristiques (14 familles produits)
+python manage.py rebuild_search_index     # Recalcule le vector FTS (titre, description, attributs, catégorie)
 ```
 
 ## API Endpoints (v1)
@@ -105,6 +118,7 @@ npm run typecheck
 - `POST /api/v1/auth/register/` — Créer un compte
 - `POST /api/v1/auth/verify-email/<token>/` — Confirmer l'email
 - `POST /api/v1/auth/login/` — Connexion (JWT)
+- `POST /api/v1/auth/token/refresh/` — Rafraîchir le token d'accès (rotation activée)
 - `POST /api/v1/auth/mfa/verify/` — Vérifier code MFA
 - `POST /api/v1/auth/logout/` — Déconnexion
 - `POST /api/v1/auth/password/reset/` — Demande de réinitialisation
@@ -116,18 +130,25 @@ npm run typecheck
 ### Catalogue & produits
 - `GET /api/v1/categories/` — Arbre des catégories (2 niveaux)
 - `GET /api/v1/categories/<slug>/attributes/` — Caractéristiques dynamiques
+- `GET /api/v1/categories/<slug>/filter-options/` — Facettes dynamiques
 - `GET /api/v1/brands/` — Marques
 - `GET /api/v1/products/` — Annonces publiques (filtres : `?q=`, `?category=<slug>`, `?brand=<uuid>`, `?condition=`, `?shop=<slug>`, `?min_price=`, `?max_price=`, `?ordering=-price`)
 - `GET /api/v1/products/<slug>/` — Détail produit (incrément vues)
+- `GET /api/v1/sellers/` — Boutiques publiques (actives + vérifiées)
 
 ### Suivi de contact (vendeur)
 - `POST /api/v1/products/<slug>/contact/` — Enregistrer un clic Appel/WhatsApp
 - `GET /api/v1/contacts/stats/` — Stats contacts par produit (auth)
+- `GET /api/v1/analytics/sellers/me/` — Analytics vendeur (vues, contacts, top produits)
+- `GET /api/v1/analytics/products/<uuid>/` — Analytics par produit
+- `GET /api/v1/analytics/admin/` — Analytics plateforme (staff)
 
 ### Modération (staff)
 - `GET /api/v1/admin/products/?status=<statut>` — File de modération (staff)
 - `POST /api/v1/admin/products/<id>/moderate/` — Action : approve, reject, hide, restore
-- `POST /api/v1/products/<slug>/report/` — Signalement public
+- `GET /api/v1/admin/stats/` — Statistiques modération
+- `GET|POST /api/v1/auth/admin/sellers/` — Gestion vendeurs (liste filtrable) + modération (suspend, ban, unsuspend)
+- `POST /api/v1/products/<slug>/report/` — Signalement public (7 motifs)
 - `GET /api/v1/reports/` + `PATCH /api/v1/reports/<id>/` — Gestion des signalements (staff)
 
 ### SEO
@@ -151,8 +172,16 @@ Documentation complète : http://localhost:8000/api/docs/
 - [x] Phase 8 — Administration & modération
 - [x] Phase 9 — SEO (sitemap, structured data)
 - [x] Phase 10 — Audit sécurité (pip-audit clean, npm audit runtime clean, JWT blacklist actif, Swagger privé en prod, fail-fast SECRET_KEY)
-- [x] Phase 11 — Tests (unit + integration + E2E : 92 tests backend 96% coverage, 3 tests vitest, 8 scénarios Playwright)
+- [x] Phase 11 — Tests (unit + integration + E2E : 181 tests backend, 17 tests vitest, 23 scénarios Playwright)
 - [x] Phase 12 — Production (HTTPS/TLS, backups, monitoring : docker-compose.prod.yml, nginx TLS proxy, certbot auto-renew, pg_dump, healthchecks)
+
+## Accessibilité
+
+- Labels associés (`htmlFor`/`id`) sur tous les formulaires critiques (auth, MFA, mot de passe, sécurité, signalement)
+- `aria-label` sur les contrôles icon-only (langue, devise, pagination, galerie, toasts)
+- Dialogs Radix UI : focus trap, `role="dialog"`, fermeture Escape
+- Toasts avec `aria-live="polite"` + `role="status"`
+- Navigation clavier : contrastes AA, dark mode, focus rings Tailwind
 
 ## Design
 

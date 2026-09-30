@@ -81,6 +81,29 @@ def test_report_invalid_reason(seeded, api_client, active_seller, gpu_category, 
 
 
 @pytest.mark.django_db
+def test_report_all_spec_reasons(seeded, api_client, active_seller, gpu_category, gpu_brand):
+    """Les 7 motifs du cahier des charges (§39) sont acceptes."""
+    spec_reasons = [
+        "PROHIBITED",
+        "FRAUD",
+        "FALSE_INFO",
+        "MISLEADING",
+        "SPAM",
+        "INAPPROPRIATE",
+        "OTHER",
+    ]
+    for i, reason in enumerate(spec_reasons):
+        p = make_product(active_seller, gpu_category, gpu_brand, title=f"GPU {i}")
+        resp = api_client.post(
+            reverse("reports:report-product", args=[p.slug]),
+            {"reason": reason},
+            format="json",
+        )
+        assert resp.status_code == status.HTTP_201_CREATED, reason
+        assert ProductReport.objects.filter(product=p, reason=reason).exists()
+
+
+@pytest.mark.django_db
 def test_report_list_requires_staff(seeded, api_client, auth_client):
     resp = api_client.get(reverse("reports:report-list"))
     assert resp.status_code == status.HTTP_401_UNAUTHORIZED

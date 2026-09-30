@@ -9,6 +9,7 @@ export interface Seller {
   status: 'PENDING' | 'ACTIVE' | 'SUSPENDED' | 'BANNED'
   email_verified: boolean
   mfa_enabled: boolean
+  is_staff: boolean
   created_at: string
   profile?: SellerProfile
 }
@@ -32,6 +33,10 @@ export interface RegisterPayload {
   password: string
   password2: string
   terms_accepted: boolean
+  captcha_token: string
+  captcha_answer: string
+  /** Honeypot — must stay empty. */
+  website?: string
 }
 
 export interface LoginPayload {
@@ -68,4 +73,18 @@ export interface MFAChallengeResponse {
 export interface MFAPayload {
   email: string
   code: string
+}
+
+export interface ChangePasswordPayload {
+  current_password: string
+  new_password: string
+}
+
+export interface SellerUpdatePayload {
+  first_name?: string
+  last_name?: string
+  business_name?: string
+  phone?: string
+  whatsapp?: string
+  profile?: Partial<SellerProfile>
 }

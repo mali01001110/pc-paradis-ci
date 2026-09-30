@@ -1,11 +1,19 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
-import { Moon, Sun, Menu, X, ShoppingCart } from 'lucide-react'
+import { useCurrency } from '@/hooks/useCurrency'
+import { useT } from '@/i18n'
+import { CURRENCY_LABELS, type CurrencyCode } from '@/lib/currency'
+import { Moon, Sun, Menu, X } from 'lucide-react'
 import { useState } from 'react'
+import CategoryMegaMenu from '@/components/ui/CategoryMegaMenu'
+
+const CURRENCIES: CurrencyCode[] = ['FCFA', 'EUR', 'USD']
 
 export default function MainLayout() {
   const { seller, logoutMutation } = useAuth()
   const navigate = useNavigate()
+  const { currency, setCurrency } = useCurrency()
+  const { lang, setLang } = useT()
   const [dark, setDark] = useState(() =>
     document.documentElement.classList.contains('dark')
   )
@@ -30,31 +38,44 @@ export default function MainLayout() {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-primary-600 flex items-center justify-center">
-                <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-white">
-                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
+              <img
+                src="/siteicon.png"
+                alt="PC Paradis CI"
+                className="w-9 h-9 rounded-xl"
+              />
               <span className="font-display font-bold text-lg text-gray-900 dark:text-white">
-                PC<span className="text-primary-600">Paradis</span> CI
+                PC <span className="text-primary-600">Paradis</span> CI
               </span>
             </Link>
 
             {/* Desktop nav */}
-            <nav className="hidden md:flex items-center gap-6">
-              <Link to="/" className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
-                Explorer
-              </Link>
-              <Link to="/?cat=gpu" className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
-                Cartes graphiques
-              </Link>
-              <Link to="/?cat=cpu" className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
-                Processeurs
-              </Link>
-            </nav>
+            <CategoryMegaMenu />
 
             {/* Right side */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <select
+                value={lang}
+                onChange={(e) => setLang(e.target.value as 'fr' | 'en')}
+                className="text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent text-gray-600 dark:text-gray-300 py-1.5 px-1.5 focus:outline-none"
+                aria-label="Langue"
+              >
+                <option value="fr">FR</option>
+                <option value="en">EN</option>
+              </select>
+
+              <select
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value as CurrencyCode)}
+                className="text-xs rounded-lg border-gray-200 dark:border-gray-700 bg-transparent text-gray-600 dark:text-gray-300 py-1.5 focus:outline-none"
+                aria-label="Devise"
+              >
+                {CURRENCIES.map((c) => (
+                  <option key={c} value={c}>
+                    {CURRENCY_LABELS[c]}
+                  </option>
+                ))}
+              </select>
+
               <button
                 onClick={toggleDark}
                 className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors"
@@ -77,7 +98,7 @@ export default function MainLayout() {
                   <Link to="/auth/login" className="hidden sm:inline-flex btn-secondary text-sm py-2 px-4">
                     Connexion
                   </Link>
-                  <Link to="/auth/register" className="btn-primary text-sm py-2 px-4">
+                  <Link to="/auth/register" className="bg-white text-primary-600 text-sm py-2 px-4 rounded-lg border border-primary-200 hover:bg-gray-100 transition-colors dark:bg-white dark:text-primary-600 dark:border-primary-200 dark:hover:bg-primary-50">
                     Vendre gratuitement
                   </Link>
                 </>
@@ -99,12 +120,7 @@ export default function MainLayout() {
             <Link to="/" onClick={() => setMenuOpen(false)} className="block text-sm font-medium text-gray-600 dark:text-gray-300 py-2">
               Explorer
             </Link>
-            <Link to="/?cat=gpu" onClick={() => setMenuOpen(false)} className="block text-sm font-medium text-gray-600 dark:text-gray-300 py-2">
-              Cartes graphiques
-            </Link>
-            <Link to="/?cat=cpu" onClick={() => setMenuOpen(false)} className="block text-sm font-medium text-gray-600 dark:text-gray-300 py-2">
-              Processeurs
-            </Link>
+            <CategoryMegaMenu isMobile />
             {!seller && (
               <div className="pt-2 flex flex-col gap-2">
                 <Link to="/auth/login" onClick={() => setMenuOpen(false)} className="btn-secondary text-sm py-2">
@@ -136,7 +152,7 @@ export default function MainLayout() {
                   </svg>
                 </div>
                 <span className="font-display font-bold text-gray-900 dark:text-white">
-                  PC<span className="text-primary-600">Paradis</span> CI
+PC <span className="text-primary-600">Paradis</span> CI
                 </span>
               </div>
               <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs">
@@ -165,7 +181,7 @@ export default function MainLayout() {
             </div>
           </div>
           <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800 text-center text-sm text-gray-400">
-            © {new Date().getFullYear()} PC Paradis CI — Toutes les annonces sont gratuites pour les vendeurs.
+            © {new Date().getFullYear()} — Smartone Metaware
           </div>
         </div>
       </footer>

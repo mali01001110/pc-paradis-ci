@@ -4,17 +4,48 @@ import { Search, ArrowRight } from 'lucide-react'
 import { useState } from 'react'
 import { productService, categoryService } from '@/services/productService'
 import ProductCard from '@/components/ProductCard'
-import type { Category } from '@/types/product'
+import { ProductRow, ProductRowSlide } from '@/components/ProductRow'
+import { ProductGrid, ProductCardSkeleton } from '@/components/ProductGrid'
+import { CategoryShowcase, flattenCategories } from '@/components/CategoryShowcase'
+import { useProductRow } from '@/hooks/useProductRow'
+import type { Product } from '@/types/product'
+import heroImage from '@/assets/hero.png'
+import { MOCK_CATEGORY_TREE, MOCK_PRODUCTS } from '@/data/mockData'
 
-const ICON_MAP: Record<string, string> = {
-  cpu: '🖥️', gpu: '🎮', ram: '⚡', storage: '💾',
-  monitor: '🖥️', peripherals: '⌨️', case: '📦', psu: '🔌',
-  cooling: '❄️', networking: '🌐', audio: '🔊', webcam: '📷',
-  default: '📦',
-}
+const TOP_CATEGORY_SECTIONS = [
+  { title: 'Composants internes', slug: 'composants-internes' },
+  { title: 'Composants externes', slug: 'composants-externes' },
+  { title: 'Accessoires', slug: 'accessoires' },
+]
 
-function catIcon(slug: string): string {
-  return ICON_MAP[slug] ?? ICON_MAP.default
+function CarouselSection({
+  title,
+  viewAllTo,
+  products,
+  loading,
+}: {
+  title: string
+  viewAllTo?: string
+  products?: Product[]
+  loading: boolean
+}) {
+  if (!loading && (!products || products.length === 0)) return null
+
+  return (
+    <ProductRow title={title} viewAllTo={viewAllTo} className="max-w-7xl mx-auto px-4 sm:px-6">
+      {loading || !products
+        ? Array.from({ length: 4 }).map((_, i) => (
+            <ProductRowSlide key={i}>
+              <ProductCardSkeleton />
+            </ProductRowSlide>
+          ))
+        : products.map((product) => (
+            <ProductRowSlide key={product.id}>
+              <ProductCard product={product} />
+            </ProductRowSlide>
+          ))}
+    </ProductRow>
+  )
 }
 
 export default function HomePage() {
@@ -23,8 +54,9 @@ export default function HomePage() {
 
   const catParam = searchParams.get('cat') ?? ''
   const queryParam = searchParams.get('q') ?? ''
+  const isFiltered = Boolean(catParam || queryParam)
 
-  const { data: products } = useQuery({
+  const { data: filtered } = useQuery({
     queryKey: ['products', catParam, queryParam],
     queryFn: async () => {
       const params: Record<string, string> = {}
@@ -35,10 +67,32 @@ export default function HomePage() {
     },
   })
 
-  const { data: categoryTree } = useQuery({
+  const { data: categoryTree, isLoading: treeLoading } = useQuery({
     queryKey: ['category-tree'],
     queryFn: async () => (await categoryService.getTree()).data,
   })
+
+  const recents = useProductRow({ ordering: '-created_at' })
+  const populars = useProductRow({ ordering: '-views_count' })
+  const gpuRow = useProductRow({ category: 'gpu' })
+  const cpuRow = useProductRow({ category: 'cpu' })
+  const ramRow = useProductRow({ category: 'ram' })
+  const stockageRow = useProductRow({ category: 'stockage' })
+  const ecransRow = useProductRow({ category: 'ecrans' })
+
+  const mockCategories = !categoryTree || categoryTree.length === 0 ? MOCK_CATEGORY_TREE : categoryTree
+  const flatCats = flattenCategories(mockCategories)
+
+  const getProducts = <T extends { results?: Product[] }>(query: { data?: T; isLoading: boolean; isError: boolean }, fallback: Product[]) =>
+    !query.isLoading && !query.isError && (query.data?.results?.length ?? 0) > 0 ? query.data!.results! : fallback
+
+  const recentProducts: Product[] = getProducts(recents, [...(MOCK_PRODUCTS.gpu ?? []), ...(MOCK_PRODUCTS.cpu ?? []), ...(MOCK_PRODUCTS.ram ?? [])])
+  const popularProducts: Product[] = getProducts(populars, recentProducts)
+  const gpuProducts = getProducts(gpuRow, MOCK_PRODUCTS.gpu ?? [])
+  const cpuProducts = getProducts(cpuRow, MOCK_PRODUCTS.cpu ?? [])
+  const ramProducts = getProducts(ramRow, MOCK_PRODUCTS.ram ?? [])
+  const stockageProducts = getProducts(stockageRow, MOCK_PRODUCTS.stockage ?? [])
+  const ecransProducts = getProducts(ecransRow, MOCK_PRODUCTS.ecrans ?? [])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -51,47 +105,33 @@ export default function HomePage() {
     setSearchParams(next, { replace: true })
   }
 
-  const handleCatSelect = (slug: string) => {
-    const next = new URLSearchParams(searchParams)
-    if (slug === catParam) {
-      next.delete('cat')
-    } else {
-      next.set('cat', slug)
-    }
-    next.delete('q')
-    setSearchParams(next, { replace: true })
-  }
-
-  const flatCats = (categoryTree ?? []).flatMap((c: Category) =>
-    (c.children ?? []).length > 0
-      ? c.children!.map((child) => ({ ...child, parent: c.name }))
-      : [c]
-  )
-
   return (
     <div>
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-primary-50 via-white to-white dark:from-[#1a0f3c] dark:via-[#0f0a1e] dark:to-[#0f0a1e]">
-        <div className="absolute inset-0 opacity-30 dark:opacity-10">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-primary-400 rounded-full blur-3xl" />
-          <div className="absolute bottom-10 right-10 w-96 h-96 bg-primary-300 rounded-full blur-3xl" />
-        </div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-20 md:py-28 text-center">
-          <div className="inline-flex items-center gap-2 bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 text-xs font-semibold px-3 py-1.5 rounded-full mb-6">
-            <span className="w-2 h-2 bg-primary-500 rounded-full animate-pulse" />
+      {/* 1-2. Hero + Recherche */}
+      <section className="relative overflow-hidden">
+        <img
+          src={heroImage}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-cover object-center z-0"
+        />
+        <div className="absolute inset-0 z-10 bg-gradient-to-b from-[#0f0a1e]/40 via-[#0f0a1e]/30 to-[#0f0a1e]/55" />
+        <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 py-20 md:py-28 text-center">
+          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 text-primary-200 text-xs font-semibold px-3 py-1.5 rounded-full mb-6">
+            <span className="w-2 h-2 bg-primary-400 rounded-full animate-pulse" />
             Marché du hardware PC en Côte d&apos;Ivoire
           </div>
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-gray-900 dark:text-white font-display tracking-tight leading-tight mb-6">
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white font-display tracking-tight leading-tight mb-6">
             LE HARDWARE PC &amp; GAMING
             <br />
-            <span className="text-primary-600">EN UN SEUL ENDROIT</span>
+            <span className="text-purple-600">EN UN SEUL ENDROIT</span>
           </h1>
-          <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto mb-10">
+          <p className="text-lg md:text-xl font-bold text-gray-100 max-w-2xl mx-auto mb-10">
             Achetez et vendez du matériel PC, gaming et informatique en Côte d&apos;Ivoire.
             Gratuit pour les vendeurs. Sans commission.
           </p>
 
-          {/* Search bar */}
+          {/* 2. Recherche */}
           <div className="max-w-2xl mx-auto mb-12">
             <form onSubmit={handleSearch} className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
@@ -138,122 +178,102 @@ export default function HomePage() {
           </div>
 
           {/* Stats */}
-          <div className="flex flex-wrap justify-center gap-8 mt-14 text-sm text-gray-500 dark:text-gray-400">
+          <div className="flex flex-wrap justify-center gap-8 mt-14 text-sm text-gray-300">
             <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900 dark:text-white font-display">
-                {products?.count?.toLocaleString('fr-FR') ?? '—'}
+              <div className="text-2xl font-bold text-white font-display">
+                {filtered?.count ? filtered.count.toLocaleString('fr-FR') : '150+'}
               </div>
               <div>Annonces</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900 dark:text-white font-display">
-                {categoryTree ? categoryTree.length : '—'}
+              <div className="text-2xl font-bold text-white font-display">
+                {categoryTree ? categoryTree.length : mockCategories.length}
               </div>
               <div>Catégories</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900 dark:text-white font-display">100%</div>
+              <div className="text-2xl font-bold text-white font-display">100%</div>
               <div>Gratuit</div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Categories */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="section-title">Catégories</h2>
-          <Link to="/" className="text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 flex items-center gap-1">
-            Voir tout
-          </Link>
-        </div>
-        {flatCats.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            {flatCats.slice(0, 12).map((cat) => (
-              <button
-                key={cat.slug}
-                onClick={() => handleCatSelect(cat.slug)}
-                className={`card p-4 flex flex-col items-center text-center hover:border-primary-300 dark:hover:border-primary-700 hover:shadow-glow transition-all duration-200 ${
-                  catParam === cat.slug ? 'border-primary-500 dark:border-primary-500' : ''
-                }`}
-              >
-                <div className="text-2xl mb-2">{catIcon(cat.slug)}</div>
-                <div className="font-semibold text-sm text-gray-900 dark:text-white mb-0.5">{cat.name}</div>
-                <div className="text-xs text-gray-400">{cat.parent ?? ''}</div>
-              </button>
-            ))}
+      {isFiltered ? (
+        /* Filtered results view */
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="section-title">
+              {queryParam ? `Résultats pour "${queryParam}"` :
+               flatCats.find((c) => c.slug === catParam)?.name ?? 'Produits'}
+              {filtered?.count != null && (
+                <span className="text-gray-400 text-base ml-2">({filtered.count})</span>
+              )}
+            </h2>
           </div>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            {['CPU', 'GPU', 'RAM', 'Storage', 'Monitors', 'Peripherals'].map((c, i) => (
-              <div key={c} className="card p-4 flex flex-col items-center text-center">
-                <div className="text-2xl mb-2">{['🖥️', '🎮', '⚡', '💾', '🖥️', '⌨️'][i]}</div>
-                <div className="font-semibold text-sm text-gray-900 dark:text-white">{c}</div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
 
-      {/* Products */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="section-title">
-            {queryParam ? `Résultats pour "${queryParam}"` :
-             catParam ? flatCats.find((c) => c.slug === catParam)?.name ?? 'Produits' :
-             'Produits récents'}
-            {products?.count != null && (
-              <span className="text-gray-400 text-base ml-2">({products.count})</span>
-            )}
-          </h2>
-        </div>
+          <ProductGrid products={filtered?.results ?? []} loading={!filtered} />
 
-        {!products ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="card overflow-hidden animate-pulse">
-                <div className="aspect-[4/3] bg-gray-200 dark:bg-gray-700" />
-                <div className="p-3 space-y-2">
-                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-2/3" />
-                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-4/5" />
-                  <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-1/3" />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : products.results.length === 0 ? (
-          <div className="card p-12 text-center">
-            <p className="text-gray-500 mb-4">
-              {queryParam
-                ? `Aucun résultat pour "${queryParam}".`
-                : 'Aucun produit dans cette catégorie.'}
-            </p>
-            <Link to="/" className="btn-secondary text-sm inline-flex items-center gap-2">
-              Voir tous les produits <ArrowRight size={14} />
-            </Link>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-            {products.results.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        )}
+          {filtered && filtered.results.length === 0 && (
+            <div className="card p-12 text-center">
+              <p className="text-gray-500 mb-4">
+                {queryParam
+                  ? `Aucun résultat pour "${queryParam}".`
+                  : 'Aucun produit dans cette catégorie.'}
+              </p>
+              <Link to="/" className="btn-secondary text-sm inline-flex items-center gap-2">
+                Voir tous les produits <ArrowRight size={14} />
+              </Link>
+            </div>
+          )}
+        </section>
+      ) : (
+        <>
+          {/* 3. Catégories */}
+          <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="section-title">Catégories</h2>
+              <Link to="/" className="text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 flex items-center gap-1">
+                Voir tout
+              </Link>
+            </div>
+            <CategoryShowcase categories={flatCats.slice(0, 12)} loading={treeLoading} activeSlug={catParam} />
+          </section>
 
-        {/* Pagination placeholder */}
-        {products && products.next && (
-          <div className="mt-8 text-center">
-            <Link
-              to={`/?${searchParams.toString()}`}
-              className="btn-secondary inline-flex items-center gap-2"
-            >
-              Voir plus <ArrowRight size={14} />
-            </Link>
-          </div>
-        )}
-      </section>
+          {/* 4-6. Familles de produits */}
+          {TOP_CATEGORY_SECTIONS.map((sec) => {
+            const mock = sec.slug === 'composants-internes'
+              ? [...(MOCK_PRODUCTS.gpu ?? []), ...(MOCK_PRODUCTS.cpu ?? []), ...(MOCK_PRODUCTS.ram ?? []), ...(MOCK_PRODUCTS.stockage ?? [])]
+              : sec.slug === 'composants-externes'
+              ? [...(MOCK_PRODUCTS.ecrans ?? [])]
+              : []
+            return <CategoryRow key={sec.slug} title={sec.title} slug={sec.slug} mockProducts={mock} />
+          })}
 
-      {/* CTA seller section */}
+          {/* 7. Produits récents */}
+          <CarouselSection
+            title="Produits récents"
+            products={recentProducts}
+            loading={recents.isLoading}
+          />
+
+          {/* 8. Produits populaires */}
+          <CarouselSection
+            title="Produits populaires"
+            products={popularProducts}
+            loading={populars.isLoading}
+          />
+
+          {/* 9-13. Sélections par catégorie */}
+          <CarouselSection title="Cartes graphiques" viewAllTo="/products?cat=gpu" products={gpuProducts} loading={gpuRow.isLoading} />
+          <CarouselSection title="Processeurs" viewAllTo="/products?cat=cpu" products={cpuProducts} loading={cpuRow.isLoading} />
+          <CarouselSection title="Mémoire RAM" viewAllTo="/products?cat=ram" products={ramProducts} loading={ramRow.isLoading} />
+          <CarouselSection title="Stockage" viewAllTo="/products?cat=stockage" products={stockageProducts} loading={stockageRow.isLoading} />
+          <CarouselSection title="Écrans" viewAllTo="/products?cat=ecrans" products={ecransProducts} loading={ecransRow.isLoading} />
+        </>
+      )}
+
+      {/* 13. CTA vendeur */}
       <section className="bg-gradient-to-r from-primary-600 to-primary-700 mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-16 text-center">
           <h2 className="text-2xl md:text-3xl font-bold text-white font-display mb-4">
@@ -273,6 +293,15 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+      {/* 14. Footer — géré par MainLayout */}
     </div>
+  )
+}
+
+function CategoryRow({ title, slug, mockProducts }: { title: string; slug: string; mockProducts?: Product[] }) {
+  const { data, isLoading, isError } = useProductRow({ category: slug })
+  const displayProducts = (!isLoading && !isError && (data?.results?.length ?? 0) > 0) ? data!.results! : (mockProducts ?? [])
+  return (
+    <CarouselSection title={title} viewAllTo={`/products?cat=${slug}`} products={displayProducts} loading={isLoading} />
   )
 }

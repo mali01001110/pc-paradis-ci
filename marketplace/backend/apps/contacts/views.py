@@ -27,7 +27,7 @@ class LogContactView(APIView):
         serializer = LogContactSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         product = Product.objects.filter(
-            slug=product_slug, status=ProductStatus.AVAILABLE
+            slug=product_slug, status=ProductStatus.AVAILABLE, is_deleted=False
         ).first()
         if not product:
             return Response(
@@ -81,6 +81,7 @@ class SellerContactStatsView(APIView):
                 "title",
                 "slug",
                 "views_count",
+                "status",
                 "total_contacts",
                 "phone_contacts",
                 "whatsapp_contacts",

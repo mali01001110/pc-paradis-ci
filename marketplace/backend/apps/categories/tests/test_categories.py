@@ -65,3 +65,30 @@ def test_brands_api(api_client, seeded_catalogue):
     resp = api_client.get(reverse("categories:brand-list"))
     assert resp.status_code == status.HTTP_200_OK
     assert any(b["name"] == "ASUS" for b in resp.data)
+
+
+@pytest.mark.django_db
+def test_all_leaf_categories_have_attribute_schemas(seeded_catalogue):
+    """Les 25 categories feuille ont au moins un schema d'attributs (§14-25)."""
+    leaf_slugs = [
+        "cpu", "gpu", "carte-mere", "ram", "stockage", "alimentation", "boitier",
+        "ventilateurs", "watercooling", "refroidissement-cpu",
+        "ecrans", "claviers", "souris", "casques", "manettes",
+        "volants", "joysticks", "tapis-de-souris", "chaises-gaming",
+        "microphones", "webcams",
+        "cables", "cables-rgb", "adaptateurs", "accessoires-pc",
+    ]
+    for slug in leaf_slugs:
+        cat = Category.objects.get(slug=slug)
+        count = AttributeDefinition.objects.filter(category=cat).count()
+        assert count >= 1, f"Category {slug} has {count} attributes — expected >= 1"
+
+
+@pytest.mark.django_db
+def test_new_attribute_categories_are_filterable(seeded_catalogue):
+    """Les nouvelles categories ont des attributs filtrables (§30)."""
+    filterable_attrs = AttributeDefinition.objects.filter(
+        category__slug__in=["ventilateurs", "casques", "chaises-gaming", "cables"],
+        filterable=True,
+    )
+    assert filterable_attrs.count() >= 3
