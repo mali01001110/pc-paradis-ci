@@ -21,6 +21,9 @@ ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 # to the insecure dev default from base.py.
 SECRET_KEY = env("DJANGO_SECRET_KEY")
 
+# Supabase requires SSL — enforce sslmode=require for the PostgreSQL connection.
+DB_SSL_MODE = env("DB_SSL_MODE", default="require")
+
 # Security headers & HTTPS
 SECURE_SSL_REDIRECT = True
 SESSION_COOKIE_SECURE = True

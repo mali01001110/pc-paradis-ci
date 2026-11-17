@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Search, ArrowRight } from 'lucide-react'
 import { useState } from 'react'
 import { productService, categoryService } from '@/services/productService'
+import { getErrorMessage } from '@/services/api'
 import ProductCard from '@/components/ProductCard'
 import { ProductRow, ProductRowSlide } from '@/components/ProductRow'
 import { ProductGrid, ProductCardSkeleton } from '@/components/ProductGrid'
@@ -56,7 +57,7 @@ export default function HomePage() {
   const queryParam = searchParams.get('q') ?? ''
   const isFiltered = Boolean(catParam || queryParam)
 
-  const { data: filtered } = useQuery({
+  const { data: filtered, isError, isLoading: filteredIsLoading } = useQuery({
     queryKey: ['products', catParam, queryParam],
     queryFn: async () => {
       const params: Record<string, string> = {}
@@ -93,6 +94,42 @@ export default function HomePage() {
   const ramProducts = getProducts(ramRow, MOCK_PRODUCTS.ram ?? [])
   const stockageProducts = getProducts(stockageRow, MOCK_PRODUCTS.stockage ?? [])
   const ecransProducts = getProducts(ecransRow, MOCK_PRODUCTS.ecrans ?? [])
+
+  const categoryName = (slug: string) => {
+    const found = flatCats.find((c) => c.slug === slug)
+    if (found) return found.name
+    const topLevel = mockCategories.find((c) => c.slug === slug)
+    return topLevel?.name ?? slug
+  }
+
+  const filteredResults = (() => {
+    if (isError || !filtered?.results || filtered.results.length === 0) {
+      if (!catParam) {
+        // No category filter: fall back to mock products matching the search query.
+        if (queryParam) {
+          const q = queryParam.toLowerCase()
+          const allMock = Object.values(MOCK_PRODUCTS).flat()
+          return allMock.filter(
+            (p) =>
+              p.title?.toLowerCase().includes(q) ||
+              p.model?.toLowerCase().includes(q) ||
+              p.brand_name?.toLowerCase().includes(q) ||
+              p.description?.toLowerCase().includes(q) ||
+              p.category_name?.toLowerCase().includes(q)
+          )
+        }
+        return []
+      }
+      const parentEntry = mockCategories.find((c) => c.slug === catParam)
+      if (parentEntry && parentEntry.children && parentEntry.children.length > 0) {
+        return parentEntry.children.flatMap((child) => MOCK_PRODUCTS[child.slug] ?? [])
+      }
+      return MOCK_PRODUCTS[catParam] ?? []
+    }
+    return filtered.results
+  })()
+
+  const gridLoading = filteredIsLoading || (filtered == null && !isError)
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -159,7 +196,7 @@ export default function HomePage() {
               )}
               {catParam && (
                 <span className="text-sm bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 px-3 py-1 rounded-full">
-                  {"Catégorie"}: {flatCats.find((c) => c.slug === catParam)?.name ?? catParam}
+                  {"Catégorie"}: {categoryName(catParam)}
                   <button onClick={() => { const n = new URLSearchParams(searchParams); n.delete('cat'); setSearchParams(n); }} className="ml-2 font-bold">{"×"}</button>
                 </span>
               )}
@@ -205,22 +242,36 @@ export default function HomePage() {
           <div className="flex items-center justify-between mb-8">
             <h2 className="section-title">
               {queryParam ? `Résultats pour "${queryParam}"` :
-               flatCats.find((c) => c.slug === catParam)?.name ?? 'Produits'}
-              {filtered?.count != null && (
-                <span className="text-gray-400 text-base ml-2">({filtered.count})</span>
-              )}
+               categoryName(catParam)}
+              <span className="text-gray-400 text-base ml-2">({filtered?.count ?? filteredResults.length})</span>
             </h2>
           </div>
 
-          <ProductGrid products={filtered?.results ?? []} loading={!filtered} />
+          <ProductGrid products={filteredResults} loading={gridLoading} />
 
-          {filtered && filtered.results.length === 0 && (
+          {isError && (
+            <div className="card p-12 text-center">
+              <p className="text-red-500 mb-4">
+                {getErrorMessage(filtered) || "Une erreur est survenue lors de la recherche."}
+              </p>
+              <button onClick={() => window.location.reload()} className="btn-secondary text-sm">
+                Réessayer
+              </button>
+            </div>
+          )}
+
+          {!isError && filteredResults.length === 0 && !gridLoading && (
             <div className="card p-12 text-center">
               <p className="text-gray-500 mb-4">
                 {queryParam
                   ? `Aucun résultat pour "${queryParam}".`
                   : 'Aucun produit dans cette catégorie.'}
               </p>
+              {queryParam && (
+                <p className="text-sm text-gray-400 mb-4">
+                  Essayez des termes plus courts ou plus généraux.
+                </p>
+              )}
               <Link to="/" className="btn-secondary text-sm inline-flex items-center gap-2">
                 Voir tous les produits <ArrowRight size={14} />
               </Link>
@@ -233,7 +284,7 @@ export default function HomePage() {
           <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
             <div className="flex items-center justify-between mb-8">
               <h2 className="section-title">Catégories</h2>
-              <Link to="/" className="text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 flex items-center gap-1">
+              <Link to="/categories" className="text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 flex items-center gap-1">
                 Voir tout
               </Link>
             </div>

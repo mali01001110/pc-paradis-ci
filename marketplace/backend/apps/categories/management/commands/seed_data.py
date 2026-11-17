@@ -17,6 +17,14 @@ BRANDS = [
     "Corsair", "Kingston", "Samsung", "Western Digital", "Logitech",
     "Razer", "AOC", "LG", "Xiaomi", "Seagate", "Crucial", "Thermaltake",
     "Cooler Master", "Noctua", "DeepCool", "HyperX", "Zotac", "Palit",
+    "EVGA", "Sapphire", "PowerColor", "XFX", "Inno3D", "Club 3D",
+    "ASUS ROG", "MSI Gaming", "Gigabyte AORUS",
+    "NZXT", "Fractal Design", "Phanteks", "Lian Li", "Silverstone", "In-Win", "be quiet!",
+    "Seasonic", "Super Flower", "Sharkoon", "Cougar", "Chieftec",
+    "EKWB", "Alphacool", "Aqua Computer", "Barrow", "Bykski", "Hardware Labs",
+    "G.Skill", "TeamGroup", "Patriot", "Corsair Vengeance", "ADATA XPG",
+    "WD Black", "Samsung 980 PRO", "Kingston Fury", "TeamGroup T-Force",
+    "SteelSeries", "Roccat", "Logitech G", "ENDGY",
 ]
 
 # Top-level categories: slug -> (label, icon)

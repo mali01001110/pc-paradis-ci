@@ -1,17 +1,7 @@
-import {
-  createContext,
-  useContext,
-  useMemo,
-  useState,
-  type ReactNode,
-} from 'react'
+import { createContext, useContext, type ReactNode } from 'react'
 import fr, { type TranslationKey } from './fr'
-import en from './en'
 
-export type Lang = 'fr' | 'en'
-
-const DICTIONARIES = { fr, en } as const
-export type LangCode = keyof typeof DICTIONARIES
+export type Lang = 'fr'
 
 function lookup(dict: unknown, path: string): string | undefined {
   let node: unknown = dict
@@ -27,42 +17,18 @@ function lookup(dict: unknown, path: string): string | undefined {
 
 interface I18nContextValue {
   lang: Lang
-  setLang: (l: Lang) => void
   t: (key: string) => string
 }
 
 const I18nContext = createContext<I18nContextValue | null>(null)
 
+const contextValue: I18nContextValue = {
+  lang: 'fr',
+  t: (key: string) => lookup(fr, key) ?? key,
+}
+
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = useState<Lang>(() => {
-    try {
-      const stored = localStorage.getItem('lang')
-      if (stored === 'fr' || stored === 'en') return stored
-    } catch {
-      // ignore
-    }
-    return 'fr'
-  })
-
-  const setLang = (next: Lang) => {
-    setLangState(next)
-    try {
-      localStorage.setItem('lang', next)
-    } catch {
-      // ignore persistence failures
-    }
-  }
-
-  const value = useMemo(
-    () => ({
-      lang,
-      setLang,
-      t: (key: string) => lookup(DICTIONARIES[lang], key) ?? lookup(DICTIONARIES.fr, key) ?? key,
-    }),
-    [lang]
-  )
-
-  return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>
+  return <I18nContext.Provider value={contextValue}>{children}</I18nContext.Provider>
 }
 
 export function useT() {
@@ -74,8 +40,7 @@ export function useT() {
 }
 
 export function useLang() {
-  const { lang, setLang } = useT()
-  return { lang, setLang }
+  return { lang: 'fr' as Lang }
 }
 
 export type { TranslationKey }

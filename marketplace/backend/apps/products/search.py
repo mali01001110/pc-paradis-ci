@@ -57,10 +57,28 @@ def refresh_attributes_text(product: Product) -> None:
 
 
 def update_product_search_vector(product: Product) -> None:
-    """Update the search_vector for a single Product instance (used by signals)."""
+    """Update the search_vector for a single Product instance (used by signals).
+
+    Uses Value() wrappers on pre-fetched instance data so no joined field references
+    appear in the UPDATE expression (PostgreSQL forbids joins in UPDATE expressions).
+    """
     if not _is_postgresql():
         return
-    Product.objects.filter(pk=product.pk).update(search_vector=_build_search_vector())
+    from django.contrib.postgres.search import SearchVector
+    from django.db.models import Value
+
+    brand_name = product.brand.name if product.brand_id else ""
+    category_name = product.category.name
+    attr_text = product.attributes_text or build_attributes_text(product)
+    vector = (
+        SearchVector(Value(product.title or ""), weight="A", config="french")
+        + SearchVector(Value(brand_name), weight="A", config="french")
+        + SearchVector(Value(category_name), weight="A", config="french")
+        + SearchVector(Value(product.model or ""), weight="B", config="french")
+        + SearchVector(Value(attr_text or ""), weight="B", config="french")
+        + SearchVector(Value(product.description or ""), weight="C", config="french")
+    )
+    Product.objects.filter(pk=product.pk).update(search_vector=vector)
 
 
 def search_products(query: str, queryset):
@@ -85,11 +103,22 @@ def search_products(query: str, queryset):
         ).distinct().order_by("-created_at")
 
     from django.contrib.postgres.search import SearchQuery, SearchRank
+    from django.db.models import Q
 
     sq = SearchQuery(q, config="french")
     vector = _build_search_vector()
-    return (
+    # FTS ranking is primary (§29).
+    fts_qs = (
         queryset.annotate(search=vector, rank=SearchRank(vector, sq))
         .filter(search=sq)
-        .order_by("-rank", "-created_at")
     )
+    # Fallback icontains on key fields for partial/prefix matches on PostgreSQL too.
+    icontains_q = queryset.filter(
+        Q(title__icontains=q)
+        | Q(model__icontains=q)
+        | Q(description__icontains=q)
+        | Q(brand__name__icontains=q)
+        | Q(category__name__icontains=q)
+        | Q(attributes_text__icontains=q)
+    )
+    return (fts_qs | icontains_q).distinct().order_by("-rank", "-created_at")

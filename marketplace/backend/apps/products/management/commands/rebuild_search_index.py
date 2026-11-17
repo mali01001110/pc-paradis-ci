@@ -22,15 +22,12 @@ class Command(BaseCommand):
             return
 
         total = Product.objects.count()
-        # 1. Rebuild the denormalized attribute text (source of the B-weight tokens).
+        # 1 + 2. Rebuild attribute text + FTS vector per product (no joins in UPDATE).
         for product in (
             Product.objects.prefetch_related("attributes__attribute").iterator(chunk_size=500)
         ):
-            Product.objects.filter(pk=product.pk).update(
-                attributes_text=search_module.build_attributes_text(product)
-            )
-        # 2. Rebuild the FTS vector (includes category name + attributes_text).
-        Product.objects.update(search_vector=search_module._build_search_vector())
+            product.attributes_text = search_module.build_attributes_text(product)
+            search_module.update_product_search_vector(product)
         self.stdout.write(
             self.style.SUCCESS(f"Reconstruit le vecteur de recherche pour {total} produits.")
         )

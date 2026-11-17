@@ -70,12 +70,14 @@ export const categoryService = {
   getFilterOptions: (slug: string) =>
     apiClient.get<FilterOptionsResponse>(`/categories/${slug}/filter-options/`),
   getBrands: () => apiClient.get<Brand[]>('/brands/'),
+  createBrand: (data: { name: string }) => apiClient.post<Brand>('/brands/', data),
 }
 
 export interface ContactStat {
   id: string
   title: string
   slug: string
+  status: Product['status']
   total_contacts: number
   phone_contacts: number
   whatsapp_contacts: number

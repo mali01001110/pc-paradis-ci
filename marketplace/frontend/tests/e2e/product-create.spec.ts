@@ -31,8 +31,7 @@ test('seller creates a product end to end', async ({ page }) => {
   })
 
   await page.goto('/seller/products/new')
-  await page.locator('select').nth(0).selectOption({ label: 'PC Portables' })
-  await page.locator('select').nth(1).selectOption({ label: 'Gaming' })
+  await page.locator('select').nth(0).selectOption({ label: 'Gaming' })
 
   await page.getByPlaceholder(/RTX 4070 Super/).fill('RTX 4070 Test')
   await page.getByPlaceholder('450000').fill('450000')

@@ -97,8 +97,8 @@ class CategoryAttributesView(generics.ListAPIView):
         )
 
 
-class BrandListView(generics.ListAPIView):
-    """List of brands (spec §56)."""
+class BrandListView(generics.ListCreateAPIView):
+    """List and create brands (spec §56)."""
 
     serializer_class = BrandSerializer
     permission_classes = [permissions.AllowAny]

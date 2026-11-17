@@ -12,6 +12,9 @@ export const MOCK_CATEGORY_TREE: Category[] = [
       { id: 'ci-1-5', name: 'Stockage', slug: 'stockage', parent: 'ci-1', description: '', icon: 'storage', sort_order: 4 },
       { id: 'ci-1-6', name: 'Alimentation', slug: 'alimentation', parent: 'ci-1', description: '', icon: 'psu', sort_order: 5 },
       { id: 'ci-1-7', name: 'Boîtier', slug: 'boitier', parent: 'ci-1', description: '', icon: 'case', sort_order: 6 },
+      { id: 'ci-1-8', name: 'Ventilateurs', slug: 'ventilateurs', parent: 'ci-1', description: '', icon: 'fan', sort_order: 7 },
+      { id: 'ci-1-9', name: 'Watercooling', slug: 'watercooling', parent: 'ci-1', description: '', icon: 'fan', sort_order: 8 },
+      { id: 'ci-1-10', name: 'Refroidissement CPU', slug: 'refroidissement-cpu', parent: 'ci-1', description: '', icon: 'fan', sort_order: 9 },
     ],
   },
   {
@@ -22,7 +25,13 @@ export const MOCK_CATEGORY_TREE: Category[] = [
       { id: 'ce-1-2', name: 'Claviers Gaming', slug: 'claviers', parent: 'ce-1', description: '', icon: 'peripherals', sort_order: 1 },
       { id: 'ce-1-3', name: 'Souris Gaming', slug: 'souris', parent: 'ce-1', description: '', icon: 'peripherals', sort_order: 2 },
       { id: 'ce-1-4', name: 'Casques Gaming', slug: 'casques', parent: 'ce-1', description: '', icon: 'audio', sort_order: 3 },
-      { id: 'ce-1-5', name: 'Chaises Gaming', slug: 'chaises-gaming', parent: 'ce-1', description: '', icon: 'peripherals', sort_order: 4 },
+      { id: 'ce-1-5', name: 'Manettes', slug: 'manettes', parent: 'ce-1', description: '', icon: 'gamepad', sort_order: 4 },
+      { id: 'ce-1-6', name: 'Volants', slug: 'volants', parent: 'ce-1', description: '', icon: 'gamepad', sort_order: 5 },
+      { id: 'ce-1-7', name: 'Joysticks', slug: 'joysticks', parent: 'ce-1', description: '', icon: 'gamepad', sort_order: 6 },
+      { id: 'ce-1-8', name: 'Tapis de souris', slug: 'tapis-de-souris', parent: 'ce-1', description: '', icon: 'peripherals', sort_order: 7 },
+      { id: 'ce-1-9', name: 'Chaises Gaming', slug: 'chaises-gaming', parent: 'ce-1', description: '', icon: 'peripherals', sort_order: 8 },
+      { id: 'ce-1-10', name: 'Microphones', slug: 'microphones', parent: 'ce-1', description: '', icon: 'audio', sort_order: 9 },
+      { id: 'ce-1-11', name: 'Webcams', slug: 'webcams', parent: 'ce-1', description: '', icon: 'camera', sort_order: 10 },
     ],
   },
   {
@@ -30,8 +39,9 @@ export const MOCK_CATEGORY_TREE: Category[] = [
     parent: null, description: '', icon: 'package', sort_order: 2,
     children: [
       { id: 'ac-1-1', name: 'Câbles', slug: 'cables', parent: 'ac-1', description: '', icon: 'package', sort_order: 0 },
-      { id: 'ac-1-2', name: 'Adaptateurs', slug: 'adaptateurs', parent: 'ac-1', description: '', icon: 'package', sort_order: 1 },
-      { id: 'ac-1-3', name: 'Accessoires PC', slug: 'accessoires-pc', parent: 'ac-1', description: '', icon: 'package', sort_order: 2 },
+      { id: 'ac-1-2', name: 'Câbles RGB', slug: 'cables-rgb', parent: 'ac-1', description: '', icon: 'package', sort_order: 1 },
+      { id: 'ac-1-3', name: 'Adaptateurs', slug: 'adaptateurs', parent: 'ac-1', description: '', icon: 'package', sort_order: 2 },
+      { id: 'ac-1-4', name: 'Accessoires PC', slug: 'accessoires-pc', parent: 'ac-1', description: '', icon: 'package', sort_order: 3 },
     ],
   },
 ]
@@ -83,5 +93,82 @@ export const MOCK_PRODUCTS: Record<string, Product[]> = {
     make('p18', 'aoc-24g2sw', 'AOC 24G2SW 24" Full HD 144Hz', 'AOC', 'ecrans', 'Écrans Gaming', 95000, 'NEUF', 'Abidjan', 'Marcory', 'mon2'),
     make('p19', 'samsung-odyssey-g7', 'Samsung Odyssey G7 32" 240Hz Curved', 'Samsung', 'ecrans', 'Écrans Gaming', 520000, 'RECONDITIONNE', 'Abidjan', 'Treichville', 'mon3', 'Reconditionné'),
     make('p20', 'benq-zowie-xl2546', 'BenQ Zowie XL2546 24" 240Hz eSports', 'BenQ', 'ecrans', 'Écrans Gaming', 280000, 'NEUF', 'Abidjan', 'Plateau', 'mon4'),
+  ],
+  'carte-mere': [
+    make('p21', 'asus-rog-strix-b650e', 'ASUS ROG Strix B650E-E Gaming WiFi', 'ASUS', 'carte-mere', 'Carte mère', 320000, 'NEUF', 'Abidjan', 'Cocody', 'mb1'),
+    make('p22', 'msi-mag-b760m', 'MSI MAG B760M Mortar WiFi DDR4', 'MSI', 'carte-mere', 'Carte mère', 145000, 'NEUF', 'Abidjan', 'Yopougon', 'mb2'),
+  ],
+  alimentation: [
+    make('p23', 'corsair-rm850x', 'Corsair RM850x 850W 80 PLUS Gold', 'Corsair', 'alimentation', 'Alimentation', 110000, 'NEUF', 'Abidjan', 'Marcory', 'psu1'),
+    make('p24', 'be-quiet-pure-power-11', 'be quiet! Pure Power 11 600W 80 PLUS Gold', 'be quiet!', 'alimentation', 'Alimentation', 85000, 'NEUF', 'Abidjan', 'Plateau', 'psu2'),
+  ],
+  boitier: [
+    make('p25', 'fractal-design-meshify-2', 'Fractal Design Meshify 2 Compact', 'Fractal Design', 'boitier', 'Boîtier', 95000, 'NEUF', 'Abidjan', 'Cocody', 'case1'),
+    make('p26', 'corsair-4000d-airflow', 'Corsair 4000D Airflow Mid-Tower', 'Corsair', 'boitier', 'Boîtier', 105000, 'OCCASION', 'Abidjan', 'Yopougon', 'case2', 'Occasion'),
+  ],
+  ventilateurs: [
+    make('p27', 'noctua-nf-p12-reduc', 'Noctua NF-P12 redux-1200 PWM 120mm', 'Noctua', 'ventilateurs', 'Ventilateurs', 18000, 'NEUF', 'Abidjan', 'Cocody', 'fan1'),
+    make('p28', 'corsair-qf120-3pk', 'Corsair QF120 RGB 120mm (3-pack)', 'Corsair', 'ventilateurs', 'Ventilateurs', 85000, 'NEUF', 'Abidjan', 'Marcory', 'fan2'),
+  ],
+  watercooling: [
+    make('p29', 'nzxt-kraken-elite-360', 'NZXT Kraken Elite 360 RGB AIO', 'NZXT', 'watercooling', 'Watercooling', 250000, 'NEUF', 'Abidjan', 'Cocody', 'wc1'),
+    make('p30', 'arctic-liquid-freezer-3-360', 'Arctic Liquid Freezer III 360', 'Arctic', 'watercooling', 'Watercooling', 115000, 'NEUF', 'Abidjan', 'Plateau', 'wc2'),
+  ],
+  'refroidissement-cpu': [
+    make('p31', 'noctua-nh-d15', 'Noctua NH-D15 CPU Air Cooler', 'Noctua', 'refroidissement-cpu', 'Refroidissement CPU', 85000, 'NEUF', 'Abidjan', 'Cocody', 'cc1'),
+    make('p32', 'deepcool-gammaxx-400', 'DeepCool GAMMAXX 400 CPU Cooler', 'DeepCool', 'refroidissement-cpu', 'Refroidissement CPU', 25000, 'NEUF', 'Abidjan', 'Yopougon', 'cc2'),
+  ],
+  claviers: [
+    make('p33', 'logitech-g915-tkl', 'Logitech G915 TKL Lightspeed Wireless', 'Logitech', 'claviers', 'Claviers Gaming', 185000, 'NEUF', 'Abidjan', 'Cocody', 'kb1'),
+    make('p34', 'razer-blackwidow-v3', 'Razer BlackWidow V3 Mechanical', 'Razer', 'claviers', 'Claviers Gaming', 110000, 'NEUF', 'Abidjan', 'Marcory', 'kb2'),
+  ],
+  souris: [
+    make('p35', 'logitech-g-pro-x-superlight', 'Logitech G Pro X Superlight 2', 'Logitech', 'souris', 'Souris Gaming', 145000, 'NEUF', 'Abidjan', 'Cocody', 'mouse1'),
+    make('p36', 'razer-deathadder-v3', 'Razer DeathAdder V3 Pro', 'Razer', 'souris', 'Souris Gaming', 135000, 'NEUF', 'Abidjan', 'Plateau', 'mouse2'),
+  ],
+  casques: [
+    make('p37', 'steelseries-arctis-7', 'SteelSeries Arctis 7 Wireless', 'SteelSeries', 'casques', 'Casques Gaming', 125000, 'NEUF', 'Abidjan', 'Cocody', 'headset1'),
+    make('p38', 'hyperx-cloud-ii', 'HyperX Cloud II Gaming Headset', 'HyperX', 'casques', 'Casques Gaming', 85000, 'OCCASION', 'Abidjan', 'Marcory', 'headset2', 'Occasion'),
+  ],
+  manettes: [
+    make('p39', 'xbox-controller-wireless', 'Xbox Wireless Controller (Carbon Black)', 'Microsoft', 'manettes', 'Manettes', 65000, 'NEUF', 'Abidjan', 'Cocody', 'ctrl1'),
+    make('p40', 'dualsense-edge', 'Sony DualSense Edge Wireless Controller', 'Sony', 'manettes', 'Manettes', 195000, 'NEUF', 'Abidjan', 'Yopougon', 'ctrl2'),
+  ],
+  volants: [
+    make('p41', 'logitech-g29', 'Logitech G29 Racing Wheel', 'Logitech', 'volants', 'Volants', 320000, 'NEUF', 'Abidjan', 'Cocody', 'wheel1'),
+  ],
+  joysticks: [
+    make('p42', 'thrustmaster-t16000m', 'Thrustmaster T16000M FCS Flight Stick', 'Thrustmaster', 'joysticks', 'Joysticks', 95000, 'NEUF', 'Abidjan', 'Plateau', 'joy1'),
+  ],
+  'tapis-de-souris': [
+    make('p43', 'steelseries-qck-medium', 'SteelSeries Qck Medium Mousepad', 'SteelSeries', 'tapis-de-souris', 'Tapis de souris', 18000, 'NEUF', 'Abidjan', 'Cocody', 'pad1'),
+    make('p44', 'corsair-mm300-extended', 'Corsair MM300 Extended Mousepad', 'Corsair', 'tapis-de-souris', 'Tapis de souris', 35000, 'NEUF', 'Abidjan', 'Marcory', 'pad2'),
+  ],
+  'chaises-gaming': [
+    make('p45', 'secretlab-titan-evo', 'Secretlab Titan Evo 2022 Series', 'Secretlab', 'chaises-gaming', 'Chaises Gaming', 450000, 'NEUF', 'Abidjan', 'Cocody', 'chair1'),
+    make('p46', 'dxracer-formula-series', 'DXRacer Formula Series Gaming Chair', 'DXRacer', 'chaises-gaming', 'Chaises Gaming', 280000, 'OCCASION', 'Abidjan', 'Yopougon', 'chair2', 'Occasion'),
+  ],
+  microphones: [
+    make('p47', 'blue-yeti-usb', 'Blue Yeti USB Microphone', 'Blue', 'microphones', 'Microphones', 115000, 'NEUF', 'Abidjan', 'Cocody', 'mic1'),
+    make('p48', 'audio-technica-at2020', 'Audio-Technica AT2020 Cardioid Condenser', 'Audio-Technica', 'microphones', 'Microphones', 95000, 'NEUF', 'Abidjan', 'Plateau', 'mic2'),
+  ],
+  webcams: [
+    make('p49', 'logitech-c920', 'Logitech C920 HD Pro Webcam', 'Logitech', 'webcams', 'Webcams', 75000, 'NEUF', 'Abidjan', 'Cocody', 'cam1'),
+    make('p50', 'razer-kiyo-pro', 'Razer Kiyo Pro Ultra', 'Razer', 'webcams', 'Webcams', 220000, 'NEUF', 'Abidjan', 'Marcory', 'cam2'),
+  ],
+  cables: [
+    make('p51', 'ugreen-hdmi-2m', 'UGREEN HDMI 2.0 Cable 2m', 'UGREEN', 'cables', 'Câbles', 12000, 'NEUF', 'Abidjan', 'Cocody', 'cable1'),
+    make('p52', 'anker-usb-c-1m', 'Anker USB-C to USB-C Cable 1m', 'Anker', 'cables', 'Câbles', 15000, 'NEUF', 'Abidjan', 'Marcory', 'cable2'),
+  ],
+  'cables-rgb': [
+    make('p53', 'corsair-rgb-led-strip', 'Corsair iCUE RGB LED Lighting Strip', 'Corsair', 'cables-rgb', 'Câbles RGB', 55000, 'NEUF', 'Abidjan', 'Cocody', 'rgb1'),
+  ],
+  adaptateurs: [
+    make('p54', 'apple-usb-c-digital-av', 'Apple USB-C Digital AV Multiport Adapter', 'Apple', 'adaptateurs', 'Adaptateurs', 65000, 'NEUF', 'Abidjan', 'Cocody', 'adapt1'),
+    make('p55', 'ugreen-hdmi-to-vga', 'UGREEN HDMI to VGA Adapter', 'UGREEN', 'adaptateurs', 'Adaptateurs', 18000, 'NEUF', 'Abidjan', 'Plateau', 'adapt2'),
+  ],
+  'accessoires-pc': [
+    make('p56', 'anker-usb-hub-4port', 'Anker 4-Port USB 3.0 Hub', 'Anker', 'accessoires-pc', 'Accessoires PC', 25000, 'NEUF', 'Abidjan', 'Cocody', 'acc1'),
+    make('p57', 'laptop-stand-aluminum', 'Aluminum Laptop Stand Riser', 'Generic', 'accessoires-pc', 'Accessoires PC', 35000, 'NEUF', 'Abidjan', 'Marcory', 'acc2'),
   ],
 }

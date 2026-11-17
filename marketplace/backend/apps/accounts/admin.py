@@ -2,7 +2,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .models import EmailVerificationToken, MFACode, Seller, SellerProfile
+from .models import EmailVerificationToken, MFACode, PasswordResetCode, Seller, SellerProfile, SellerStatus
 
 
 @admin.register(Seller)
@@ -10,6 +10,8 @@ class SellerAdmin(UserAdmin):
     """Django admin for sellers (spec §38 - admin manages sellers)."""
 
     ordering = ["email"]
+    actions = ["activate_selected", "suspend_selected", "ban_selected"]
+    actions_on_top = True
     list_display = ("email", "business_name", "status", "email_verified", "mfa_enabled", "created_at")
     list_filter = ("status", "email_verified", "mfa_enabled", "is_staff")
     search_fields = ("email", "first_name", "last_name", "business_name", "phone")
@@ -25,6 +27,18 @@ class SellerAdmin(UserAdmin):
     add_fieldsets = (
         (None, {"classes": ("wide",), "fields": ("email", "password1", "password2")}),
     )
+
+    @admin.action(description="Activer les vendeurs sélectionnés")
+    def activate_selected(self, request, queryset):
+        queryset.exclude(is_superuser=True).update(status=SellerStatus.ACTIVE)
+
+    @admin.action(description="Suspendre les vendeurs sélectionnés")
+    def suspend_selected(self, request, queryset):
+        queryset.exclude(is_superuser=True).update(status=SellerStatus.SUSPENDED)
+
+    @admin.action(description="Bannir les vendeurs sélectionnés")
+    def ban_selected(self, request, queryset):
+        queryset.exclude(is_superuser=True).update(status=SellerStatus.BANNED)
 
 
 @admin.register(SellerProfile)
@@ -42,6 +56,13 @@ class EmailVerificationTokenAdmin(admin.ModelAdmin):
 
 @admin.register(MFACode)
 class MFACodeAdmin(admin.ModelAdmin):
+    list_display = ("seller", "created_at", "expires_at", "used", "attempts")
+    list_filter = ("used",)
+    readonly_fields = ("id", "code_hash", "created_at")
+
+
+@admin.register(PasswordResetCode)
+class PasswordResetCodeAdmin(admin.ModelAdmin):
     list_display = ("seller", "created_at", "expires_at", "used", "attempts")
     list_filter = ("used",)
     readonly_fields = ("id", "code_hash", "created_at")

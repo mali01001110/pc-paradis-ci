@@ -83,7 +83,7 @@ export function CategoryShowcase({ categories, loading, activeSlug, onSelect, cl
       {categories.map((cat) => (
         <Link
           key={cat.slug}
-          to={`/?cat=${cat.slug}`}
+          to={`/products?cat=${cat.slug}`}
           onClick={onSelect ? () => onSelect(cat.slug) : undefined}
           className={cn(
             'card p-4 flex flex-col items-center text-center hover:border-primary-300 dark:hover:border-primary-700 hover:shadow-glow transition-all duration-200',

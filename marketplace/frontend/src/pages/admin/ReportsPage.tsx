@@ -52,7 +52,7 @@ export default function ReportsPage() {
   })
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: 'REVIEWED' | 'DISMISSED' }) => {
+    mutationFn: async ({ id, status }: { id: string; status: 'REVIEWED' | 'DISMISSED' | 'OPEN' }) => {
       setActionLoading(id)
       return adminService.updateReport(id, status)
     },

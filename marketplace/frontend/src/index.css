@@ -33,7 +33,7 @@
 
   .btn-secondary {
     @apply inline-flex items-center justify-center gap-2 rounded-lg border border-primary-300
-           dark:border-primary-700 text-primary-700 dark:text-primary-300 font-semibold
+           dark:border-primary-700 bg-white dark:bg-white text-primary-700 dark:text-primary-300 font-semibold
            px-4 py-2.5 transition-all duration-200 hover:bg-primary-50 dark:hover:bg-primary-950/50
            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500
            focus-visible:ring-offset-2;

@@ -1,12 +1,7 @@
-import { useState } from 'react'
-import { useLang } from '@/i18n'
-import { useCurrency } from '@/hooks/useCurrency'
 import { useAuth } from '@/hooks/useAuth'
-import { Globe, CreditCard, User, Shield, CheckCircle } from 'lucide-react'
+import { User, Shield, CheckCircle } from 'lucide-react'
 
 export default function SettingsPage() {
-  const { lang, setLang } = useLang()
-  const { currency, setCurrency } = useCurrency()
   const { seller } = useAuth()
 
   return (
@@ -52,55 +47,6 @@ export default function SettingsPage() {
               </div>
             )}
           </div>
-        </div>
-
-        {/* Language */}
-        <div className="card p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Globe size={18} className="text-primary-600" />
-            <h2 className="font-semibold text-gray-900 dark:text-white">Langue</h2>
-          </div>
-          <div className="flex gap-3">
-            {(['fr', 'en'] as const).map((l) => (
-              <button
-                key={l}
-                onClick={() => setLang(l)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
-                  lang === l
-                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
-                    : 'border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-primary-300'
-                }`}
-              >
-                {l === 'fr' ? 'Français' : 'English'}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Currency */}
-        <div className="card p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <CreditCard size={18} className="text-primary-600" />
-            <h2 className="font-semibold text-gray-900 dark:text-white">Devise d&apos;affichage</h2>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            {(['FCFA', 'EUR', 'USD'] as const).map((c) => (
-              <button
-                key={c}
-                onClick={() => setCurrency(c)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
-                  currency === c
-                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
-                    : 'border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-primary-300'
-                }`}
-              >
-                {c === 'FCFA' ? 'FCFA' : c === 'EUR' ? 'EUR (€)' : 'USD ($)'}
-              </button>
-            ))}
-          </div>
-          <p className="text-xs text-gray-400 mt-2">
-            Les prix sont stockés en FCFA et convertis pour affichage.
-          </p>
         </div>
       </div>
     </div>

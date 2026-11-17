@@ -22,7 +22,7 @@ import { shopService } from '@/services/shopService'
 
 const MOCK_LIST = vi.mocked(shopService.getPublicSellers)
 
-function listResponse(results: unknown[], count = results.length) {
+function listResponse<T>(results: T[], count = results.length) {
   return {
     data: { count, next: null, previous: null, results },
     status: 200,

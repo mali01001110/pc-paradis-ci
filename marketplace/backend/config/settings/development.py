@@ -6,6 +6,12 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
+# Supabase connection for local development (DB host only).
+# Override these via .env or environment to point at a Supabase project.
+SUPABASE_URL = env("SUPABASE_URL", default="")
+SUPABASE_ANON_KEY = env("SUPABASE_ANON_KEY", default="")
+SUPABASE_SERVICE_ROLE_KEY = env("SUPABASE_SERVICE_ROLE_KEY", default="")
+
 # Dev-friendly in-memory / local services already defined in base.
 # Static and media served locally during development.
 

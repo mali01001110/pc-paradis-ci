@@ -26,6 +26,10 @@ env = environ.Env(
     REDIS_URL=(str, "redis://redis:6379/0"),
     CELERY_BROKER_URL=(str, "redis://redis:6379/0"),
     CELERY_RESULT_BACKEND=(str, "redis://redis:6379/0"),
+    SUPABASE_URL=(str, ""),
+    SUPABASE_ANON_KEY=(str, ""),
+    SUPABASE_SERVICE_ROLE_KEY=(str, ""),
+    DB_SSL_MODE=(str, "require"),
     EMAIL_BACKEND=(str, "django.core.mail.backends.console.EmailBackend"),
     EMAIL_HOST=(str, ""),
     EMAIL_PORT=(int, 587),
@@ -40,7 +44,15 @@ env = environ.Env(
     MFA_MAX_ATTEMPTS=(int, 5),
 )
 
+# Read .env file (present in backend/ for local development)
+env.read_env(BASE_DIR / ".env")
+
 SECRET_KEY = env("DJANGO_SECRET_KEY", default="dev-insecure-change-me-this-is-only-a-local-dev-key")
+
+# Supabase (PostgreSQL host) — Option A: DB host only, Django ORM unchanged.
+SUPABASE_URL = env("SUPABASE_URL")
+SUPABASE_ANON_KEY = env("SUPABASE_ANON_KEY")
+SUPABASE_SERVICE_ROLE_KEY = env("SUPABASE_SERVICE_ROLE_KEY")
 
 DEBUG = env("DEBUG")
 
@@ -116,6 +128,7 @@ DATABASES = {
         "HOST": env("DB_HOST"),
         "PORT": env("DB_PORT"),
         "CONN_MAX_AGE": 60,
+        "OPTIONS": {"sslmode": env("DB_SSL_MODE")},
     }
 }
 
@@ -161,6 +174,12 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Custom user model (seller)
 AUTH_USER_MODEL = "accounts.Seller"
+
+# Authentication backends: normalize email to lowercase before authenticating so
+# the Django admin login matches the REST API LoginView (case-insensitive email).
+AUTHENTICATION_BACKENDS = [
+    "apps.accounts.backends.CaseInsensitiveEmailBackend",
+]
 
 # Django REST Framework
 REST_FRAMEWORK = {

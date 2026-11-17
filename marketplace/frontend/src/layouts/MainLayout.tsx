@@ -1,19 +1,12 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
-import { useCurrency } from '@/hooks/useCurrency'
-import { useT } from '@/i18n'
-import { CURRENCY_LABELS, type CurrencyCode } from '@/lib/currency'
 import { Moon, Sun, Menu, X } from 'lucide-react'
 import { useState } from 'react'
 import CategoryMegaMenu from '@/components/ui/CategoryMegaMenu'
 
-const CURRENCIES: CurrencyCode[] = ['FCFA', 'EUR', 'USD']
-
 export default function MainLayout() {
   const { seller, logoutMutation } = useAuth()
   const navigate = useNavigate()
-  const { currency, setCurrency } = useCurrency()
-  const { lang, setLang } = useT()
   const [dark, setDark] = useState(() =>
     document.documentElement.classList.contains('dark')
   )
@@ -53,29 +46,6 @@ export default function MainLayout() {
 
             {/* Right side */}
             <div className="flex items-center gap-2">
-              <select
-                value={lang}
-                onChange={(e) => setLang(e.target.value as 'fr' | 'en')}
-                className="text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent text-gray-600 dark:text-gray-300 py-1.5 px-1.5 focus:outline-none"
-                aria-label="Langue"
-              >
-                <option value="fr">FR</option>
-                <option value="en">EN</option>
-              </select>
-
-              <select
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value as CurrencyCode)}
-                className="text-xs rounded-lg border-gray-200 dark:border-gray-700 bg-transparent text-gray-600 dark:text-gray-300 py-1.5 focus:outline-none"
-                aria-label="Devise"
-              >
-                {CURRENCIES.map((c) => (
-                  <option key={c} value={c}>
-                    {CURRENCY_LABELS[c]}
-                  </option>
-                ))}
-              </select>
-
               <button
                 onClick={toggleDark}
                 className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors"
@@ -159,18 +129,7 @@ PC <span className="text-primary-600">Paradis</span> CI
                 La marketplace référence pour le hardware PC et gaming en Côte d'Ivoire. Gratuit pour les vendeurs.
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-6 text-sm">
-              <div>
-                <h4 className="font-semibold text-gray-900 dark:text-white mb-3">Catégories</h4>
-                <ul className="space-y-2">
-                  <li><Link to="/?cat=cpu" className="text-gray-500 dark:text-gray-400 hover:text-primary-600">Processeurs</Link></li>
-                  <li><Link to="/?cat=gpu" className="text-gray-500 dark:text-gray-400 hover:text-primary-600">Cartes graphiques</Link></li>
-                  <li><Link to="/?cat=ram" className="text-gray-500 dark:text-gray-400 hover:text-primary-600">RAM</Link></li>
-                  <li><Link to="/?cat=storage" className="text-gray-500 dark:text-gray-400 hover:text-primary-600">Stockage</Link></li>
-                  <li><Link to="/?cat=peripherals" className="text-gray-500 dark:text-gray-400 hover:text-primary-600">Périphériques</Link></li>
-                </ul>
-              </div>
-              <div>
+            <div className="text-sm">
                 <h4 className="font-semibold text-gray-900 dark:text-white mb-3">Compte</h4>
                 <ul className="space-y-2">
                   <li><Link to="/auth/register" className="text-gray-500 dark:text-gray-400 hover:text-primary-600">Créer un espace</Link></li>
@@ -178,7 +137,6 @@ PC <span className="text-primary-600">Paradis</span> CI
                   <li><Link to="/seller" className="text-gray-500 dark:text-gray-400 hover:text-primary-600">Mon espace</Link></li>
                 </ul>
               </div>
-            </div>
           </div>
           <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800 text-center text-sm text-gray-400">
             © {new Date().getFullYear()} — Smartone Metaware

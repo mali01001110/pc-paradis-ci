@@ -5,7 +5,7 @@ import { Loader2, ArrowLeft } from 'lucide-react'
 import { productService, categoryService } from '@/services/productService'
 import { getErrorMessage } from '@/services/api'
 import ImageUploadZone from '@/components/ImageUploadZone'
-import type { AttributeDefinition, ProductCreatePayload, ProductImage } from '@/types/product'
+import type { AttributeDefinition, Category, ProductCreatePayload, ProductImage } from '@/types/product'
 
 const CONDITIONS = [
   { value: 'NEUF', label: 'Neuf' },
@@ -50,7 +50,6 @@ export default function ProductFormPage() {
   const isEdit = !!id
 
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
-  const [selectedParentId, setSelectedParentId] = useState('')
   const [categorySlug, setCategorySlug] = useState('')
   const [attrValues, setAttrValues] = useState<Record<string, unknown>>({})
   const [imageFiles, setImageFiles] = useState<File[]>([])
@@ -59,6 +58,7 @@ export default function ProductFormPage() {
   const [deletingIds, setDeletingIds] = useState<string[]>([])
   const [reordering, setReordering] = useState(false)
   const [error, setError] = useState('')
+  const [customBrand, setCustomBrand] = useState('')
 
   const { data: tree } = useQuery({
     queryKey: ['category-tree'],
@@ -81,11 +81,6 @@ export default function ProductFormPage() {
 
   useEffect(() => {
     if (isEdit && product && tree) {
-      let parentId = ''
-      for (const top of tree) {
-        if (top.id === product.category_id) parentId = top.id
-        if (top.children?.some((c) => c.id === product.category_id)) parentId = top.id
-      }
       setForm({
         title: product.title,
         model: product.model,
@@ -99,7 +94,6 @@ export default function ProductFormPage() {
         category_id: product.category_id ?? '',
         brand_id: product.brand_id ?? '',
       })
-      setSelectedParentId(parentId)
       setCategorySlug(product.category_slug ?? '')
       setExistingImages(product.images ?? [])
     }
@@ -118,10 +112,15 @@ export default function ProductFormPage() {
 
   const submitMutation = useMutation({
     mutationFn: async () => {
+      let brandId = form.brand_id
+      if (brandId === 'custom' && customBrand.trim()) {
+        const created = await categoryService.createBrand({ name: customBrand.trim() })
+        brandId = created.data.id
+      }
       const payload: ProductCreatePayload = {
         title: form.title.trim(),
         category_id: form.category_id,
-        brand_id: form.brand_id || undefined,
+        brand_id: brandId || undefined,
         model: form.model || undefined,
         description: form.description || undefined,
         price: Number(form.price),
@@ -167,6 +166,31 @@ export default function ProductFormPage() {
     onError: (err) => setError(getErrorMessage(err)),
   })
 
+  const STORAGE_VISIBILITY: Record<string, Record<string, string[]>> = {
+    'SSD NVMe': {
+      hidden: ['rpm'],
+    },
+    'SSD SATA': {
+      hidden: ['rpm', 'pcie_gen', 'nand'],
+    },
+    HDD: {
+      hidden: ['pcie_gen', 'read_speed', 'write_speed', 'dram', 'tbw', 'nand'],
+    },
+  }
+
+  const isAttributeVisible = (def: AttributeDefinition): boolean => {
+    const storageType = Object.entries(attrValues).find(([defId]) => {
+      const d = (attributes ?? []).find((a) => a.id === defId)
+      return d?.key === 'storage_type'
+    })?.[1] as string | undefined
+    if (!storageType || !categorySlug || categorySlug !== 'stockage') return true
+    const rule = STORAGE_VISIBILITY[storageType]
+    if (!rule) return true
+    return !rule.hidden.includes(def.key)
+  }
+
+  const visibleAttributes = (attributes ?? []).filter(isAttributeVisible)
+
   const missingRequired = visibleAttributes.some((def) => {
     if (!def.required) return false
     const v = attrValues[def.id]
@@ -181,6 +205,10 @@ export default function ProductFormPage() {
       setError('Veuillez remplir le titre, la catégorie et le prix.')
       return
     }
+    if (form.brand_id === 'custom' && !customBrand.trim()) {
+      setError('Veuillez entrer le nom de la marque personnalisée.')
+      return
+    }
     if (missingRequired) {
       setError('Veuillez remplir toutes les caractéristiques obligatoires.')
       return
@@ -188,24 +216,24 @@ export default function ProductFormPage() {
     submitMutation.mutate()
   }
 
-  const handleParentChange = (value: string) => {
-    setSelectedParentId(value)
-    const top = (tree ?? []).find((c) => c.id === value)
-    if (top && (top.children ?? []).length === 0) {
-      setForm({ ...form, category_id: top.id })
-      setCategorySlug(top.slug)
-    } else {
-      setForm({ ...form, category_id: '' })
+  const flattenCategories = (nodes: Category[]): Category[] => {
+    const flat: Category[] = []
+    const walk = (list: Category[]) => {
+      for (const node of list) {
+        flat.push(node)
+        if (node.children?.length) walk(node.children)
+      }
     }
-    setCategorySlug('')
-    setAttrValues({})
+    walk(nodes)
+    return flat
   }
 
-  const handleChildChange = (value: string) => {
-    const children = (tree ?? []).find((c) => c.id === selectedParentId)?.children ?? []
-    const child = children.find((c) => c.id === value)
+  const allCategories = flattenCategories(tree ?? [])
+
+  const handleCategoryChange = (value: string) => {
+    const cat = allCategories.find((c) => c.id === value)
     setForm({ ...form, category_id: value })
-    setCategorySlug(child?.slug ?? '')
+    setCategorySlug(cat?.slug ?? '')
     setAttrValues({})
   }
 
@@ -246,35 +274,6 @@ export default function ProductFormPage() {
 
   const attrLabel = (def: AttributeDefinition) =>
     `${def.label}${def.unit ? ' (' + def.unit + ')' : ''}`
-
-  /**
-   * Storage auto-hide (spec §19): fields irrelevant to the selected storage
-   * type are hidden. e.g. RPM for an NVMe SSD, PCIe gen for an HDD.
-   */
-  const STORAGE_VISIBILITY: Record<string, Record<string, string[]>> = {
-    'SSD NVMe': {
-      hidden: ['rpm'],
-    },
-    'SSD SATA': {
-      hidden: ['rpm', 'pcie_gen', 'nand'],
-    },
-    HDD: {
-      hidden: ['pcie_gen', 'read_speed', 'write_speed', 'dram', 'tbw', 'nand'],
-    },
-  }
-
-  const isAttributeVisible = (def: AttributeDefinition): boolean => {
-    const storageType = Object.entries(attrValues).find(([defId]) => {
-      const d = (attributes ?? []).find((a) => a.id === defId)
-      return d?.key === 'storage_type'
-    })?.[1] as string | undefined
-    if (!storageType || !categorySlug || categorySlug !== 'stockage') return true
-    const rule = STORAGE_VISIBILITY[storageType]
-    if (!rule) return true
-    return !rule.hidden.includes(def.key)
-  }
-
-  const visibleAttributes = (attributes ?? []).filter(isAttributeVisible)
 
   const renderAttributeField = (def: AttributeDefinition) => {
     const value = attrValues[def.id]
@@ -377,9 +376,6 @@ export default function ProductFormPage() {
     return <div className="p-8 text-gray-400">Chargement...</div>
   }
 
-  const parent = (tree ?? []).find((c) => c.id === selectedParentId)
-  const children = parent?.children ?? []
-
   return (
     <div className="p-6 lg:p-8 max-w-3xl">
       <div className="flex items-center gap-3 mb-8">
@@ -426,37 +422,18 @@ export default function ProductFormPage() {
                 {"Catégorie"} <span className="text-red-500">*</span>
               </label>
               <select
-                value={selectedParentId}
-                onChange={(e) => handleParentChange(e.target.value)}
+                value={form.category_id}
+                onChange={(e) => handleCategoryChange(e.target.value)}
                 className="input-field"
               >
                 <option value="">{"Sélectionnez..."}</option>
-                {(tree ?? []).map((c) => (
+                {allCategories.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
                   </option>
                 ))}
               </select>
             </div>
-            {children.length > 0 && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  {"Sous-catégorie"} <span className="text-red-500">*</span>
-                </label>
-                <select
-                  value={form.category_id}
-                  onChange={(e) => handleChildChange(e.target.value)}
-                  className="input-field"
-                >
-                  <option value="">{"Sélectionnez..."}</option>
-                  {children.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -475,7 +452,17 @@ export default function ProductFormPage() {
                     {b.name}
                   </option>
                 ))}
+                <option value="custom">Autre (personnalisé)</option>
               </select>
+              {form.brand_id === 'custom' && (
+                <input
+                  type="text"
+                  value={customBrand}
+                  onChange={(e) => setCustomBrand(e.target.value)}
+                  className="input-field mt-2"
+                  placeholder="Nom de la marque"
+                />
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">

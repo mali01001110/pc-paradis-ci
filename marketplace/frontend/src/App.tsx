@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import MainLayout from '@/layouts/MainLayout'
 import HomePage from '@/pages/HomePage'
+import CategoriesPage from '@/pages/CategoriesPage'
 import ShopPage from '@/pages/ShopPage'
 import RegisterPage from '@/pages/auth/RegisterPage'
 import LoginPage from '@/pages/auth/LoginPage'
@@ -26,6 +27,7 @@ import SellersManagementPage from '@/pages/admin/SellersManagementPage'
 import ReportsPage from '@/pages/admin/ReportsPage'
 import AdminAnalyticsPage from '@/pages/admin/AdminAnalyticsPage'
 import { AdminRoute } from '@/components/AdminRoute'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 export default function App() {
   return (
@@ -33,6 +35,7 @@ export default function App() {
       {/* Public routes */}
       <Route element={<MainLayout />}>
         <Route path="/" element={<HomePage />} />
+        <Route path="/categories" element={<CategoriesPage />} />
         <Route path="/products" element={<CatalogPage />} />
         <Route path="/sellers" element={<SellersPage />} />
         <Route path="/shop/:slug" element={<ShopPage />} />
@@ -51,8 +54,8 @@ export default function App() {
         <Route index element={<DashboardHome />} />
         <Route path="shop" element={<MyShopPage />} />
         <Route path="products" element={<MyProductsPage />} />
-        <Route path="products/new" element={<ProductFormPage />} />
-        <Route path="products/:id/edit" element={<ProductFormPage />} />
+        <Route path="products/new" element={<ErrorBoundary><ProductFormPage /></ErrorBoundary>} />
+        <Route path="products/:id/edit" element={<ErrorBoundary><ProductFormPage /></ErrorBoundary>} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="security" element={<SecurityPage />} />
         <Route path="contacts" element={<ContactsPage />} />

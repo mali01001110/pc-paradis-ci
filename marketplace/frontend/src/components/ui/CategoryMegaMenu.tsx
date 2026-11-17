@@ -47,7 +47,7 @@ export default function CategoryMegaMenu({ isMobile = false }: CategoryMegaMenuP
                 {btn.items.map((item) => (
                   <Link
                     key={item.slug}
-                    to={`/catalogue?cat=${item.slug}`}
+                    to={`/products?cat=${item.slug}`}
                     onClick={() => setMobileExpanded(null)}
                     className="block py-2 px-3 text-sm text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                   >
@@ -72,7 +72,9 @@ export default function CategoryMegaMenu({ isMobile = false }: CategoryMegaMenuP
             onMouseEnter={() => setOpenIndex(idx)}
             onMouseLeave={() => setOpenIndex(null)}
           >
-            <button
+            <Link
+              to={`/products?cat=${btn.slug}`}
+              onClick={() => setOpenIndex(null)}
               className={cn(
                 'flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
                 openIndex === idx
@@ -85,7 +87,7 @@ export default function CategoryMegaMenu({ isMobile = false }: CategoryMegaMenuP
                 size={14}
                 className={cn('transition-transform', openIndex === idx ? 'rotate-180' : '')}
               />
-            </button>
+            </Link>
 
             {openIndex === idx && (
               <div className="absolute left-0 top-full pt-2 z-50">
@@ -94,7 +96,7 @@ export default function CategoryMegaMenu({ isMobile = false }: CategoryMegaMenuP
                     {btn.items.map((item) => (
                       <Link
                         key={item.slug}
-                        to={`/catalogue?cat=${item.slug}`}
+                        to={`/products?cat=${item.slug}`}
                         onClick={() => setOpenIndex(null)}
                         className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-gray-700 dark:text-gray-200 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50/50 dark:hover:bg-primary-950/30 transition-colors group"
                       >
