@@ -5,3 +5,6 @@ class ShopsConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "apps.shops"
     verbose_name = "Boutiques"
+
+    def ready(self):
+        from . import signals  # noqa: F401

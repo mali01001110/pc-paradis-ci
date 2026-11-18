@@ -1,8 +1,22 @@
 """Django signals for the products app — keeps search_vector and attributes_text in sync (spec §29)."""
+from django.core.cache import cache
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 
 from .models import Product, ProductAttributeValue
+
+
+@receiver(post_save, sender=Product)
+@receiver(post_delete, sender=Product)
+def invalidate_shop_cache_on_product_change(sender, instance, **kwargs):
+    """Invalidate the public shop cache (product_count) when a product changes."""
+    from apps.shops.models import Shop
+
+    try:
+        shop = instance.seller.shop
+    except Shop.DoesNotExist:
+        return
+    cache.delete(f"shop:{shop.slug}")
 
 
 @receiver(post_save, sender=Product)

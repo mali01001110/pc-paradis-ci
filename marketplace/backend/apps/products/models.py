@@ -85,6 +85,7 @@ class Product(models.Model):
         indexes = [
             models.Index(fields=["status", "category"]),
             models.Index(fields=["status", "-created_at"]),
+            models.Index(fields=["status", "-views_count"], name="product_status_views_count_idx"),
             GinIndex(fields=["search_vector"], name="product_search_gin"),
         ]
 

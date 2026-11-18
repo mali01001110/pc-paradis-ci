@@ -1,4 +1,4 @@
-# PC Paradis CI — Marketplace PC Hardware & Gaming
+# PC Paradis — Marketplace PC Hardware & Gaming
 
 Marketplace spécialisée PC Hardware et Gaming pour la Côte d'Ivoire.
 

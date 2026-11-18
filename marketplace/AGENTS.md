@@ -1,4 +1,4 @@
-# AGENTS.md — PC Paradis CI
+# AGENTS.md — PC Paradis
 
 ## Stack
 - **Frontend**: React 18 + TypeScript + Vite + Tailwind CSS (shadcn/ui patterns)
@@ -94,4 +94,4 @@ border     : rounded-card (14px)
 
 ## Phase actuelle
 
-Phases 1-12 complètes (auth, boutique, catalogue, produits, marketplace, contact tracking, modération, SEO, audit sécurité, tests E2E, production). PC Paradis CI prêt pour le déploiement.
+Phases 1-12 complètes (auth, boutique, catalogue, produits, marketplace, contact tracking, modération, SEO, audit sécurité, tests E2E, production). PC Paradis prêt pour le déploiement.

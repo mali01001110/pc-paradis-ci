@@ -62,8 +62,10 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(f"Caracteristiques : {AttributeDefinition.objects.count()}"))
 
     def _load_attributes(self, category):
+        # Create-only: existing definitions (including admin edits) are never
+        # overwritten, so re-running on every backend start is safe.
         for order, (key, label, vtype, unit, options, required, filterable) in enumerate(ATTRIBUTES.get(category.slug, [])):
-            AttributeDefinition.objects.update_or_create(
+            AttributeDefinition.objects.get_or_create(
                 category=category,
                 key=key,
                 defaults={

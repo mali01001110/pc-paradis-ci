@@ -9,6 +9,11 @@ export interface ProductRowParams {
   search?: string
 }
 
+export interface ProductRowQueryOptions {
+  staleTime?: number
+  enabled?: boolean
+}
+
 export function productRowQueryKey(params: ProductRowParams): unknown[] {
   return [
     'product-row',
@@ -19,7 +24,10 @@ export function productRowQueryKey(params: ProductRowParams): unknown[] {
   ]
 }
 
-export function useProductRow(params: ProductRowParams = {}): UseQueryResult<ProductListResponse> {
+export function useProductRow(
+  params: ProductRowParams = {},
+  queryOptions: ProductRowQueryOptions = {},
+): UseQueryResult<ProductListResponse> {
   const { category, ordering = '-created_at', pageSize = 8, search } = params
 
   return useQuery({
@@ -31,5 +39,7 @@ export function useProductRow(params: ProductRowParams = {}): UseQueryResult<Pro
       query['ordering'] = ordering
       return (await productService.listProducts(query)).data
     },
+    staleTime: queryOptions.staleTime,
+    enabled: queryOptions.enabled,
   })
 }

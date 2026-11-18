@@ -1,8 +1,12 @@
 """API views for shops (spec §10)."""
+from django.core.cache import cache
 from rest_framework import generics, permissions
+from rest_framework.response import Response
 
 from .models import Shop
 from .serializers import ShopSerializer, MyShopSerializer
+
+SHOP_TTL = 10 * 60  # 10 min
 
 
 class MyShopView(generics.RetrieveUpdateAPIView):
@@ -27,3 +31,13 @@ class PublicShopView(generics.RetrieveAPIView):
     lookup_field = "slug"
     lookup_url_kwarg = "slug"
     queryset = Shop.objects.filter(is_active=True)
+
+    def retrieve(self, request, *args, **kwargs):
+        shop = self.get_object()
+        cache_key = f"shop:{shop.slug}"
+        data = cache.get(cache_key)
+        if data is None:
+            serializer = self.get_serializer(shop)
+            data = serializer.data
+            cache.set(cache_key, data, timeout=SHOP_TTL)
+        return Response(data)

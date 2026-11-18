@@ -36,8 +36,8 @@ env = environ.Env(
     EMAIL_USE_TLS=(bool, True),
     EMAIL_HOST_USER=(str, ""),
     EMAIL_HOST_PASSWORD=(str, ""),
-    DEFAULT_FROM_EMAIL=(str, "PC Paradis CI <no-reply@pcparadis.ci>"),
-    PLATFORM_NAME=(str, "PC Paradis CI"),
+    DEFAULT_FROM_EMAIL=(str, "PC Paradis <no-reply@pcparadis.ci>"),
+    PLATFORM_NAME=(str, "PC Paradis"),
     FRONTEND_URL=(str, "http://localhost:5173"),
     EMAIL_VERIFICATION_TOKEN_TTL_HOURS=(int, 24),
     MFA_CODE_TTL_SECONDS=(int, 300),
@@ -88,6 +88,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "config.middleware.cache_control.CacheControlMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -264,7 +265,7 @@ PHONE_COUNTRY_CODE = "+225"
 
 # OpenAPI / Swagger
 SPECTACULAR_SETTINGS = {
-    "TITLE": "PC Paradis CI API",
+    "TITLE": "PC Paradis API",
     "DESCRIPTION": "Marketplace PC Hardware & Gaming - Côte d'Ivoire. API REST versionnée.",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,

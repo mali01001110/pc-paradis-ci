@@ -163,6 +163,28 @@ def test_public_list_filter_by_price(seeded, api_client, active_seller, gpu_cate
 
 
 @pytest.mark.django_db
+def test_public_list_filter_by_leaf_category_slug(seeded, api_client, active_seller, gpu_category, gpu_brand):
+    make_product(active_seller, gpu_category, gpu_brand, title="RTX 4070 Super")
+    resp = api_client.get(reverse("products:product-list"), {"category": "gpu"})
+    assert resp.status_code == status.HTTP_200_OK
+    titles = [p["title"] for p in resp.data["results"]]
+    assert titles == ["RTX 4070 Super"]
+
+
+@pytest.mark.django_db
+def test_public_list_filter_by_family_slug_includes_subcategories(
+    seeded, api_client, active_seller, gpu_category, gpu_brand
+):
+    """Filtering by a top-level family slug returns products of its sub-categories."""
+    family = gpu_category.parent  # composants-internes
+    make_product(active_seller, gpu_category, gpu_brand, title="RTX 4070 Super")
+    resp = api_client.get(reverse("products:product-list"), {"category": family.slug})
+    assert resp.status_code == status.HTTP_200_OK
+    titles = [p["title"] for p in resp.data["results"]]
+    assert titles == ["RTX 4070 Super"]
+
+
+@pytest.mark.django_db
 def test_public_list_ordering(seeded, api_client, active_seller, gpu_category, gpu_brand):
     make_product(active_seller, gpu_category, gpu_brand, title="Premier")
     resp = api_client.get(reverse("products:product-list"), {"ordering": "-price"})

@@ -96,7 +96,7 @@ export default function ShopPage() {
           )}
           {(shop.whatsapp || shop.phone) && (
             <a
-              href={`https://wa.me/${wa.replace('+', '')}?text=${encodeURIComponent(`Bonjour, je suis intéressé par les produits de ${shop.name} sur PC Paradis CI.`)}`}
+              href={`https://wa.me/${wa.replace('+', '')}?text=${encodeURIComponent(`Bonjour, je suis intéressé par les produits de ${shop.name} sur PC Paradis.`)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="btn-secondary flex-1"

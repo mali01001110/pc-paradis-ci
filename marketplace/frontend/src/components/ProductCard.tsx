@@ -16,7 +16,7 @@ const COND_VARIANTS: Record<Product['condition'], BadgeProps['variant']> = {
 }
 
 const WA_MESSAGE = (title: string) =>
-  `Bonjour, je suis intéressé par votre annonce "${title}" publiée sur PC Paradis CI.`
+   `Bonjour, je suis intéressé par votre annonce "${title}" publiée sur PC Paradis.`
 
 interface Props {
   product: Product
@@ -43,6 +43,7 @@ export default function ProductCard({ product, className }: Props) {
               alt={product.title}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               loading="lazy"
+              decoding="async"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">

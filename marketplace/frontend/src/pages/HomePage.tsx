@@ -1,7 +1,7 @@
 import { Link, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Search, ArrowRight } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { productService, categoryService } from '@/services/productService'
 import { getErrorMessage } from '@/services/api'
 import ProductCard from '@/components/ProductCard'
@@ -9,15 +9,46 @@ import { ProductRow, ProductRowSlide } from '@/components/ProductRow'
 import { ProductGrid, ProductCardSkeleton } from '@/components/ProductGrid'
 import { CategoryShowcase, flattenCategories } from '@/components/CategoryShowcase'
 import { useProductRow } from '@/hooks/useProductRow'
+import type { ProductRowParams } from '@/hooks/useProductRow'
 import type { Product } from '@/types/product'
-import heroImage from '@/assets/hero.png'
-import { MOCK_CATEGORY_TREE, MOCK_PRODUCTS } from '@/data/mockData'
 
 const TOP_CATEGORY_SECTIONS = [
   { title: 'Composants internes', slug: 'composants-internes' },
   { title: 'Composants externes', slug: 'composants-externes' },
   { title: 'Accessoires', slug: 'accessoires' },
 ]
+
+// Homepage product/category queries stay fresh longer (10 min) to avoid
+// refetches on window focus and across the shared section/carousel queries.
+const HOME_STALE_TIME = 1000 * 60 * 10
+const SECTION_ROOT_MARGIN = '500px 0px'
+
+function useNearViewport() {
+  const ref = useRef<HTMLDivElement>(null)
+  const [isNearViewport, setIsNearViewport] = useState(false)
+
+  useEffect(() => {
+    const element = ref.current
+    if (!element) return
+
+    if (!('IntersectionObserver' in window)) {
+      setIsNearViewport(true)
+      return
+    }
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry?.isIntersecting) {
+        setIsNearViewport(true)
+        observer.disconnect()
+      }
+    }, { rootMargin: SECTION_ROOT_MARGIN })
+
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [])
+
+  return { ref, isNearViewport }
+}
 
 function CarouselSection({
   title,
@@ -49,6 +80,40 @@ function CarouselSection({
   )
 }
 
+function HomeProductRow({
+  title,
+  viewAllTo,
+  params,
+}: {
+  title: string
+  viewAllTo?: string
+  params: ProductRowParams
+}) {
+  const { ref, isNearViewport } = useNearViewport()
+  const query = useProductRow(params, {
+    staleTime: HOME_STALE_TIME,
+    enabled: isNearViewport,
+  })
+  const products = query.data?.results ?? []
+
+  if (isNearViewport && !query.isLoading && (query.isError || products.length === 0)) {
+    return null
+  }
+
+  return (
+    <div ref={ref} className={!isNearViewport ? 'min-h-[400px]' : undefined}>
+      {isNearViewport && (
+        <CarouselSection
+          title={title}
+          viewAllTo={viewAllTo}
+          products={products}
+          loading={query.isLoading}
+        />
+      )}
+    </div>
+  )
+}
+
 export default function HomePage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [searchInput, setSearchInput] = useState(searchParams.get('q') ?? '')
@@ -66,68 +131,47 @@ export default function HomePage() {
       params['ordering'] = '-created_at'
       return (await productService.listProducts(params)).data
     },
+    staleTime: HOME_STALE_TIME,
+    enabled: isFiltered,
   })
 
   const { data: categoryTree, isLoading: treeLoading } = useQuery({
     queryKey: ['category-tree'],
     queryFn: async () => (await categoryService.getTree()).data,
+    staleTime: HOME_STALE_TIME,
   })
 
-  const recents = useProductRow({ ordering: '-created_at' })
-  const populars = useProductRow({ ordering: '-views_count' })
-  const gpuRow = useProductRow({ category: 'gpu' })
-  const cpuRow = useProductRow({ category: 'cpu' })
-  const ramRow = useProductRow({ category: 'ram' })
-  const stockageRow = useProductRow({ category: 'stockage' })
-  const ecransRow = useProductRow({ category: 'ecrans' })
+  const recents = useProductRow({ ordering: '-created_at' }, { staleTime: HOME_STALE_TIME })
+  const flatCats = flattenCategories(categoryTree ?? [])
+  const childCategoryCount = (categoryTree ?? []).reduce(
+    (count, parent) => count + (parent.children?.length ?? 0),
+    0
+  )
 
-  const mockCategories = !categoryTree || categoryTree.length === 0 ? MOCK_CATEGORY_TREE : categoryTree
-  const flatCats = flattenCategories(mockCategories)
+  const internalCats: { id: string; name: string; slug: string; parentName: string }[] = (() => {
+    const node = (categoryTree ?? []).find((c) => c.slug === 'composants-internes')
+    if (!node?.children?.length) return []
+    return node.children.map((child) => ({
+      id: child.id,
+      name: child.name,
+      slug: child.slug,
+      parentName: node.name,
+    }))
+  })()
 
   const getProducts = <T extends { results?: Product[] }>(query: { data?: T; isLoading: boolean; isError: boolean }, fallback: Product[]) =>
     !query.isLoading && !query.isError && (query.data?.results?.length ?? 0) > 0 ? query.data!.results! : fallback
 
-  const recentProducts: Product[] = getProducts(recents, [...(MOCK_PRODUCTS.gpu ?? []), ...(MOCK_PRODUCTS.cpu ?? []), ...(MOCK_PRODUCTS.ram ?? [])])
-  const popularProducts: Product[] = getProducts(populars, recentProducts)
-  const gpuProducts = getProducts(gpuRow, MOCK_PRODUCTS.gpu ?? [])
-  const cpuProducts = getProducts(cpuRow, MOCK_PRODUCTS.cpu ?? [])
-  const ramProducts = getProducts(ramRow, MOCK_PRODUCTS.ram ?? [])
-  const stockageProducts = getProducts(stockageRow, MOCK_PRODUCTS.stockage ?? [])
-  const ecransProducts = getProducts(ecransRow, MOCK_PRODUCTS.ecrans ?? [])
-
+  const recentProducts: Product[] = getProducts(recents, [])
+  const showProductRows = recents.isError || (recents.data?.count ?? 0) > 0
   const categoryName = (slug: string) => {
     const found = flatCats.find((c) => c.slug === slug)
     if (found) return found.name
-    const topLevel = mockCategories.find((c) => c.slug === slug)
+    const topLevel = categoryTree?.find((c) => c.slug === slug)
     return topLevel?.name ?? slug
   }
 
-  const filteredResults = (() => {
-    if (isError || !filtered?.results || filtered.results.length === 0) {
-      if (!catParam) {
-        // No category filter: fall back to mock products matching the search query.
-        if (queryParam) {
-          const q = queryParam.toLowerCase()
-          const allMock = Object.values(MOCK_PRODUCTS).flat()
-          return allMock.filter(
-            (p) =>
-              p.title?.toLowerCase().includes(q) ||
-              p.model?.toLowerCase().includes(q) ||
-              p.brand_name?.toLowerCase().includes(q) ||
-              p.description?.toLowerCase().includes(q) ||
-              p.category_name?.toLowerCase().includes(q)
-          )
-        }
-        return []
-      }
-      const parentEntry = mockCategories.find((c) => c.slug === catParam)
-      if (parentEntry && parentEntry.children && parentEntry.children.length > 0) {
-        return parentEntry.children.flatMap((child) => MOCK_PRODUCTS[child.slug] ?? [])
-      }
-      return MOCK_PRODUCTS[catParam] ?? []
-    }
-    return filtered.results
-  })()
+  const filteredResults: Product[] = filtered?.results ?? []
 
   const gridLoading = filteredIsLoading || (filtered == null && !isError)
 
@@ -147,9 +191,11 @@ export default function HomePage() {
       {/* 1-2. Hero + Recherche */}
       <section className="relative overflow-hidden">
         <img
-          src={heroImage}
+          src="/hero-3c25cae9ba1e.webp"
           alt=""
           aria-hidden="true"
+          width={1983}
+          height={793}
           className="absolute inset-0 w-full h-full object-cover object-center z-0"
         />
         <div className="absolute inset-0 z-10 bg-gradient-to-b from-[#0f0a1e]/40 via-[#0f0a1e]/30 to-[#0f0a1e]/55" />
@@ -208,7 +254,10 @@ export default function HomePage() {
             <Link to="/" className="btn-primary px-8 py-3.5 text-base">
               Explorer les annonces
             </Link>
-            <Link to="/auth/register" className="btn-secondary px-8 py-3.5 text-base">
+            <Link
+              to="/auth/register"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-white text-primary-600 border border-primary-200 hover:bg-gray-100 transition-colors dark:bg-white dark:text-primary-600 dark:border-primary-200 dark:hover:bg-primary-50 px-8 py-3.5 text-base font-semibold"
+            >
               Vendre gratuitement
               <ArrowRight size={16} />
             </Link>
@@ -218,13 +267,13 @@ export default function HomePage() {
           <div className="flex flex-wrap justify-center gap-8 mt-14 text-sm text-gray-300">
             <div className="text-center">
               <div className="text-2xl font-bold text-white font-display">
-                {filtered?.count ? filtered.count.toLocaleString('fr-FR') : '150+'}
+                {recents.data?.count.toLocaleString('fr-FR') ?? (recents.isError ? 'Indisponible' : '…')}
               </div>
               <div>Annonces</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-white font-display">
-                {categoryTree ? categoryTree.length : mockCategories.length}
+                {childCategoryCount.toLocaleString('fr-FR')}
               </div>
               <div>Catégories</div>
             </div>
@@ -281,46 +330,51 @@ export default function HomePage() {
       ) : (
         <>
           {/* 3. Catégories */}
-          <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="section-title">Catégories</h2>
-              <Link to="/categories" className="text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 flex items-center gap-1">
-                Voir tout
-              </Link>
-            </div>
-            <CategoryShowcase categories={flatCats.slice(0, 12)} loading={treeLoading} activeSlug={catParam} />
-          </section>
+          {treeLoading || internalCats.length > 0 ? (
+            <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="section-title">Catégories</h2>
+                <Link to="/categories" className="text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 flex items-center gap-1">
+                  Voir tout
+                </Link>
+              </div>
+              <CategoryShowcase categories={internalCats} loading={treeLoading} activeSlug={catParam} />
+            </section>
+          ) : null}
 
-          {/* 4-6. Familles de produits */}
-          {TOP_CATEGORY_SECTIONS.map((sec) => {
-            const mock = sec.slug === 'composants-internes'
-              ? [...(MOCK_PRODUCTS.gpu ?? []), ...(MOCK_PRODUCTS.cpu ?? []), ...(MOCK_PRODUCTS.ram ?? []), ...(MOCK_PRODUCTS.stockage ?? [])]
-              : sec.slug === 'composants-externes'
-              ? [...(MOCK_PRODUCTS.ecrans ?? [])]
-              : []
-            return <CategoryRow key={sec.slug} title={sec.title} slug={sec.slug} mockProducts={mock} />
-          })}
+          {showProductRows && (
+            <>
+              {/* 4-6. Familles de produits */}
+              {TOP_CATEGORY_SECTIONS.map((sec) => (
+                <HomeProductRow
+                  key={sec.slug}
+                  title={sec.title}
+                  viewAllTo={`/products?cat=${sec.slug}`}
+                  params={{ category: sec.slug }}
+                />
+              ))}
 
-          {/* 7. Produits récents */}
-          <CarouselSection
-            title="Produits récents"
-            products={recentProducts}
-            loading={recents.isLoading}
-          />
+              {/* 7. Produits récents */}
+              <CarouselSection
+                title="Produits récents"
+                products={recentProducts}
+                loading={recents.isLoading}
+              />
 
-          {/* 8. Produits populaires */}
-          <CarouselSection
-            title="Produits populaires"
-            products={popularProducts}
-            loading={populars.isLoading}
-          />
+              {/* 8. Produits populaires */}
+              <HomeProductRow
+                title="Produits populaires"
+                params={{ ordering: '-views_count' }}
+              />
 
-          {/* 9-13. Sélections par catégorie */}
-          <CarouselSection title="Cartes graphiques" viewAllTo="/products?cat=gpu" products={gpuProducts} loading={gpuRow.isLoading} />
-          <CarouselSection title="Processeurs" viewAllTo="/products?cat=cpu" products={cpuProducts} loading={cpuRow.isLoading} />
-          <CarouselSection title="Mémoire RAM" viewAllTo="/products?cat=ram" products={ramProducts} loading={ramRow.isLoading} />
-          <CarouselSection title="Stockage" viewAllTo="/products?cat=stockage" products={stockageProducts} loading={stockageRow.isLoading} />
-          <CarouselSection title="Écrans" viewAllTo="/products?cat=ecrans" products={ecransProducts} loading={ecransRow.isLoading} />
+              {/* 9-13. Sélections par catégorie */}
+              <HomeProductRow title="Cartes graphiques" viewAllTo="/products?cat=gpu" params={{ category: 'gpu' }} />
+              <HomeProductRow title="Processeurs" viewAllTo="/products?cat=cpu" params={{ category: 'cpu' }} />
+              <HomeProductRow title="Mémoire RAM" viewAllTo="/products?cat=ram" params={{ category: 'ram' }} />
+              <HomeProductRow title="Stockage" viewAllTo="/products?cat=stockage" params={{ category: 'stockage' }} />
+              <HomeProductRow title="Écrans" viewAllTo="/products?cat=ecrans" params={{ category: 'ecrans' }} />
+            </>
+          )}
         </>
       )}
 
@@ -328,7 +382,7 @@ export default function HomePage() {
       <section className="bg-gradient-to-r from-primary-600 to-primary-700 mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-16 text-center">
           <h2 className="text-2xl md:text-3xl font-bold text-white font-display mb-4">
-            Devenez vendeur sur PC Paradis CI
+            Devenez vendeur sur PC Paradis
           </h2>
           <p className="text-primary-100 max-w-xl mx-auto mb-8">
             Créez gratuitement votre espace, publiez vos annonces sans frais. Sans commission, sans abonnement. Contactez directement vos acheteurs par téléphone ou WhatsApp.
@@ -346,13 +400,5 @@ export default function HomePage() {
       </section>
       {/* 14. Footer — géré par MainLayout */}
     </div>
-  )
-}
-
-function CategoryRow({ title, slug, mockProducts }: { title: string; slug: string; mockProducts?: Product[] }) {
-  const { data, isLoading, isError } = useProductRow({ category: slug })
-  const displayProducts = (!isLoading && !isError && (data?.results?.length ?? 0) > 0) ? data!.results! : (mockProducts ?? [])
-  return (
-    <CarouselSection title={title} viewAllTo={`/products?cat=${slug}`} products={displayProducts} loading={isLoading} />
   )
 }

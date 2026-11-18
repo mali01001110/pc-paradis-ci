@@ -95,6 +95,7 @@ const fr = {
     webcams: 'Webcams',
     cables_rgb: 'Câbles RGB',
     accessoires_pc: 'Accessoires PC',
+    tables_gaming: 'Tables Gaming',
   },
 } as const
 

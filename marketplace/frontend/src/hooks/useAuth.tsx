@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { authService, setTokens, clearTokens } from '@/services/api'
+import { authService, setTokens, clearTokens, hasValidToken } from '@/services/api'
 import type { LoginPayload, MFAPayload, RegisterPayload, Seller } from '@/types/auth'
 
 export function useAuth() {
@@ -15,6 +15,7 @@ export function useAuth() {
     },
     retry: false,
     staleTime: 1000 * 60 * 10,
+    enabled: hasValidToken() || Boolean(localStorage.getItem('refresh_token')),
   })
 
   const registerMutation = useMutation({

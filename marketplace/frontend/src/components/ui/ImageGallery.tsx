@@ -80,7 +80,7 @@ export function ImageGallery({ images, alt = '', className }: ImageGalleryProps)
               )}
               aria-label={`Image ${i + 1}`}
             >
-              <img src={img.image} alt="" className="w-full h-full object-cover" loading="lazy" />
+              <img src={img.image} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
             </button>
           ))}
         </div>
@@ -129,6 +129,7 @@ export function ImageGallery({ images, alt = '', className }: ImageGalleryProps)
             alt={alt}
             className="max-h-full max-w-full object-contain"
             onClick={(e) => e.stopPropagation()}
+            decoding="async"
           />
         </div>
       )}

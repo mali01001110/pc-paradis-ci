@@ -56,8 +56,6 @@ SUBCATEGORIES = {
         ("manettes", "Manettes"),
         ("volants", "Volants"),
         ("joysticks", "Joysticks"),
-        ("tapis-de-souris", "Tapis de souris"),
-        ("chaises-gaming", "Chaises gaming"),
         ("microphones", "Microphones"),
         ("webcams", "Webcams"),
     ],
@@ -66,6 +64,9 @@ SUBCATEGORIES = {
         ("cables-rgb", "C\u00e2bles RGB"),
         ("adaptateurs", "Adaptateurs"),
         ("accessoires-pc", "Accessoires PC"),
+        ("tables-gaming", "Tables gaming"),
+        ("chaises-gaming", "Chaises gaming"),
+        ("tapis-de-souris", "Tapis de souris"),
     ],
 }
 
@@ -326,6 +327,16 @@ ATTRIBUTES = {
         ("category", "Cat\u00e9gorie", "select", "", ["Hub USB", "Support / pied", "Bureau rise", "Organiseur c\u00e2bles", "Autre"], True, True),
         ("material", "Mat\u00e9riau", "text", "", None, False, False),
         ("laptop_desktop", "Pour", "select", "", ["PC Portable", "PC Bureau", "Universel"], True, True),
+    ),
+    # --- Gaming Tables ---
+    "tables-gaming": _attrs(
+        ("dimensions", "Dimensions", "text", "", None, True, True),
+        ("format", "Format / forme", "select", "", ["Droit", "En L", "En U", "Autre"], True, True),
+        ("material", "Mat\u00e9riau", "select", "", ["MDF", "Bois", "M\u00e9tal", "Verre", "Autre"], True, True),
+        ("max_load", "Charge max", "number", "kg", None, False, True),
+        ("adjustable_height", "Hauteur r\u00e9glable", "boolean", "", None, False, True),
+        ("rgb", "Eclairage RGB", "boolean", "", None, False, True),
+        ("cable_management", "Gestion des c\u00e2bles", "boolean", "", None, False, False),
     ),
     # --- Headsets (spec §23 — casques gaming) ---
     "casques": _attrs(

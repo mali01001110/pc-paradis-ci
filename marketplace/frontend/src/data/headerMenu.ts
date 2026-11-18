@@ -38,8 +38,6 @@ export const headerMenu: MenuButton[] = [
       { slug: 'manettes', labelKey: 'menu.manettes' },
       { slug: 'volants', labelKey: 'menu.volants' },
       { slug: 'joysticks', labelKey: 'menu.joysticks' },
-      { slug: 'tapis-de-souris', labelKey: 'menu.tapis_de_souris' },
-      { slug: 'chaises-gaming', labelKey: 'menu.chaises_gaming' },
       { slug: 'microphones', labelKey: 'menu.microphones' },
       { slug: 'webcams', labelKey: 'menu.webcams' },
     ],
@@ -52,6 +50,9 @@ export const headerMenu: MenuButton[] = [
       { slug: 'cables-rgb', labelKey: 'menu.cables_rgb' },
       { slug: 'adaptateurs', labelKey: 'menu.adaptateurs' },
       { slug: 'accessoires-pc', labelKey: 'menu.accessoires_pc' },
+      { slug: 'tables-gaming', labelKey: 'menu.tables_gaming' },
+      { slug: 'chaises-gaming', labelKey: 'menu.chaises_gaming' },
+      { slug: 'tapis-de-souris', labelKey: 'menu.tapis_de_souris' },
     ],
   },
 ]

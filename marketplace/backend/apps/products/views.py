@@ -2,7 +2,7 @@
 import django_filters
 from django.conf import settings
 from django.db import transaction
-from django.db.models import Count, Sum
+from django.db.models import Count, Q, Sum
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from decimal import Decimal, ROUND_HALF_UP
@@ -30,7 +30,10 @@ from .serializers import (
 class ProductFilterSet(django_filters.FilterSet):
     """Explicit filters for public/seller product listing (spec §34)."""
 
-    category = django_filters.CharFilter(field_name="category__slug")
+    # Category filter matches the category itself AND its sub-categories, so a
+    # top-level family slug (e.g. composants-internes) returns the products of
+    # its leaves. The catalogue tree is two levels deep (family -> leaf).
+    category = django_filters.CharFilter(method="filter_by_category")
     shop = django_filters.CharFilter(field_name="seller__shop__slug")
     brand = django_filters.CharFilter(field_name="brand__id")
     brand_slug = django_filters.CharFilter(field_name="brand__slug")
@@ -41,6 +44,9 @@ class ProductFilterSet(django_filters.FilterSet):
     class Meta:
         model = Product
         fields = ["category", "brand", "brand_slug", "condition", "city", "commune", "shop", "status"]
+
+    def filter_by_category(self, queryset, name, value):
+        return queryset.filter(Q(category__slug=value) | Q(category__parent__slug=value))
 
 
 class ProductFilterMixin:

@@ -28,7 +28,7 @@ export function SellerCard({ name, city, whatsapp, phone, shopSlug, className }:
   const waNumber = (whatsapp || phone) && normalizePhone(whatsapp || phone!)
   const waHref = waNumber
     ? `https://wa.me/${waNumber.replace('+', '')}?text=${encodeURIComponent(
-        `Bonjour, je suis intéressé par vos produits sur PC Paradis CI.`
+        `Bonjour, je suis intéressé par vos produits sur PC Paradis.`
       )}`
     : null
 

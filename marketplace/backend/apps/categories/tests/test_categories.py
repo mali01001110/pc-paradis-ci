@@ -49,6 +49,10 @@ def test_category_tree_api(api_client, seeded_catalogue):
     assert resp.status_code == status.HTTP_200_OK
     top = next(c for c in resp.data if c["slug"] == "composants-internes")
     assert any(child["slug"] == "cpu" for child in top["children"])
+    accessoires = next(c for c in resp.data if c["slug"] == "accessoires")
+    composants_externes = next(c for c in resp.data if c["slug"] == "composants-externes")
+    assert any(child["slug"] == "chaises-gaming" for child in accessoires["children"])
+    assert not any(child["slug"] == "chaises-gaming" for child in composants_externes["children"])
 
 
 @pytest.mark.django_db
@@ -69,7 +73,7 @@ def test_brands_api(api_client, seeded_catalogue):
 
 @pytest.mark.django_db
 def test_all_leaf_categories_have_attribute_schemas(seeded_catalogue):
-    """Les 25 categories feuille ont au moins un schema d'attributs (§14-25)."""
+    """Les 26 categories feuille ont au moins un schema d'attributs (§14-25)."""
     leaf_slugs = [
         "cpu", "gpu", "carte-mere", "ram", "stockage", "alimentation", "boitier",
         "ventilateurs", "watercooling", "refroidissement-cpu",
@@ -77,6 +81,7 @@ def test_all_leaf_categories_have_attribute_schemas(seeded_catalogue):
         "volants", "joysticks", "tapis-de-souris", "chaises-gaming",
         "microphones", "webcams",
         "cables", "cables-rgb", "adaptateurs", "accessoires-pc",
+        "tables-gaming",
     ]
     for slug in leaf_slugs:
         cat = Category.objects.get(slug=slug)

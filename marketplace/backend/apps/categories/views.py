@@ -1,9 +1,14 @@
 """API views for the catalogue (spec §11, §30, §44)."""
+from django.core.cache import cache
 from rest_framework import generics, permissions
 from rest_framework.response import Response
 
 from .models import AttributeDefinition, Brand, Category
 from .serializers import AttributeDefinitionSerializer, BrandSerializer, CategoryNodeSerializer, CategorySerializer
+
+TREE_TTL = 60 * 60           # 1 h
+FILTER_OPTIONS_TTL = 30 * 60  # 30 min
+BRANDS_TTL = 60 * 60         # 1 h
 
 
 class FilterOptionsView(generics.RetrieveAPIView):
@@ -22,23 +27,28 @@ class FilterOptionsView(generics.RetrieveAPIView):
 
     def retrieve(self, request, *args, **kwargs):
         category = self.get_object()
-        definitions = AttributeDefinition.objects.filter(
-            category=category, filterable=True
-        ).order_by("sort_order", "label")
+        cache_key = f"filter-options:{category.slug}"
+        data = cache.get(cache_key)
+        if data is None:
+            definitions = AttributeDefinition.objects.filter(
+                category=category, filterable=True
+            ).order_by("sort_order", "label")
 
-        filters = []
-        for d in definitions:
-            entry = {
-                "key": d.key,
-                "label": d.label,
-                "value_type": d.value_type,
-                "unit": d.unit or "",
-                "options": d.options if d.options else [],
-                "values": self._distinct_values(d),
-            }
-            filters.append(entry)
+            filters = []
+            for d in definitions:
+                entry = {
+                    "key": d.key,
+                    "label": d.label,
+                    "value_type": d.value_type,
+                    "unit": d.unit or "",
+                    "options": d.options if d.options else [],
+                    "values": self._distinct_values(d),
+                }
+                filters.append(entry)
 
-        return Response({"category": category.slug, "filters": filters})
+            data = {"category": category.slug, "filters": filters}
+            cache.set(cache_key, data, timeout=FILTER_OPTIONS_TTL)
+        return Response(data)
 
     def _distinct_values(self, definition: AttributeDefinition):
         if definition.value_type == "select":
@@ -73,6 +83,16 @@ class CategoryTreeView(generics.ListAPIView):
     def get_queryset(self):
         return Category.objects.filter(parent__isnull=True).order_by("sort_order", "name")
 
+    def list(self, request, *args, **kwargs):
+        cache_key = "category-tree"
+        data = cache.get(cache_key)
+        if data is None:
+            queryset = self.filter_queryset(self.get_queryset())
+            serializer = self.get_serializer(queryset, many=True)
+            data = serializer.data
+            cache.set(cache_key, data, timeout=TREE_TTL)
+        return Response(data)
+
 
 class CategoryDetailView(generics.RetrieveAPIView):
     """Single category (by slug) with children + attributes."""
@@ -104,3 +124,13 @@ class BrandListView(generics.ListCreateAPIView):
     permission_classes = [permissions.AllowAny]
     pagination_class = None
     queryset = Brand.objects.all().order_by("name")
+
+    def list(self, request, *args, **kwargs):
+        cache_key = "brand-list"
+        data = cache.get(cache_key)
+        if data is None:
+            queryset = self.filter_queryset(self.get_queryset())
+            serializer = self.get_serializer(queryset, many=True)
+            data = serializer.data
+            cache.set(cache_key, data, timeout=BRANDS_TTL)
+        return Response(data)

@@ -3,7 +3,6 @@ import { categoryService } from '@/services/productService'
 import { CategoryShowcase, CategoryShowcaseSkeleton } from '@/components/CategoryShowcase'
 import type { FlatCategory } from '@/components/CategoryShowcase'
 import type { Category } from '@/types/product'
-import { MOCK_CATEGORY_TREE } from '@/data/mockData'
 
 const FAMILY_ORDER = ['Composants Internes', 'Composants Externes', 'Accessoires']
 
@@ -48,8 +47,7 @@ export default function CategoriesPage() {
     queryFn: async () => (await categoryService.getTree()).data,
   })
 
-  const mockCategories = !categoryTree || categoryTree.length === 0 ? MOCK_CATEGORY_TREE : categoryTree
-  const families = buildFamilies(mockCategories)
+  const families = buildFamilies(categoryTree ?? [])
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-16">

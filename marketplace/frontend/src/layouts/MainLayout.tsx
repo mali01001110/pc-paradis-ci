@@ -33,11 +33,11 @@ export default function MainLayout() {
             <Link to="/" className="flex items-center gap-2.5">
               <img
                 src="/siteicon.png"
-                alt="PC Paradis CI"
+                alt="PC Paradis"
                 className="w-9 h-9 rounded-xl"
               />
               <span className="font-display font-bold text-lg text-gray-900 dark:text-white">
-                PC <span className="text-primary-600">Paradis</span> CI
+                PC <span className="text-primary-600">Paradis</span>
               </span>
             </Link>
 
@@ -65,10 +65,10 @@ export default function MainLayout() {
                 </div>
               ) : (
                 <>
-                  <Link to="/auth/login" className="hidden sm:inline-flex btn-secondary text-sm py-2 px-4">
+                  <Link to="/auth/login" className="hidden sm:inline-flex btn-primary text-sm py-2 px-4">
                     Connexion
                   </Link>
-                  <Link to="/auth/register" className="bg-white text-primary-600 text-sm py-2 px-4 rounded-lg border border-primary-200 hover:bg-gray-100 transition-colors dark:bg-white dark:text-primary-600 dark:border-primary-200 dark:hover:bg-primary-50">
+                  <Link to="/auth/register" className="btn-primary text-sm py-2 px-4">
                     Vendre gratuitement
                   </Link>
                 </>
@@ -116,13 +116,14 @@ export default function MainLayout() {
           <div className="flex flex-col md:flex-row justify-between gap-6">
             <div>
               <div className="flex items-center gap-2.5 mb-3">
-                <div className="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center">
-                  <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 text-white">
-                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </div>
+                <img
+                  src="/siteicon.png"
+                  alt=""
+                  aria-hidden="true"
+                  className="w-8 h-8 rounded-lg object-cover"
+                />
                 <span className="font-display font-bold text-gray-900 dark:text-white">
-PC <span className="text-primary-600">Paradis</span> CI
+PC <span className="text-primary-600">Paradis</span>
                 </span>
               </div>
               <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs">
@@ -139,7 +140,7 @@ PC <span className="text-primary-600">Paradis</span> CI
               </div>
           </div>
           <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800 text-center text-sm text-gray-400">
-            © {new Date().getFullYear()} — Smartone Metaware
+            © 2026 — mali01001110
           </div>
         </div>
       </footer>

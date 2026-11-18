@@ -66,7 +66,7 @@ export default function ProductDetailPage() {
     contactMutation.mutate('WHATSAPP')
     if (data) {
       const waUrl = `https://wa.me/${normalizePhone(data.whatsapp || data.phone).replace('+', '')}?text=${encodeURIComponent(
-        `Bonjour, je suis intéressé par votre annonce "${data.title}" publiée sur PC Paradis CI.`
+        `Bonjour, je suis intéressé par votre annonce "${data.title}" publiée sur PC Paradis.`
       )}`
       window.open(waUrl, '_blank', 'noopener,noreferrer')
     }
@@ -78,11 +78,11 @@ export default function ProductDetailPage() {
 
   useSEO({
     title: product
-      ? `${product.title} — ${product.price.toLocaleString('fr-FR')} ${product.currency} | PC Paradis CI`
-      : 'PC Paradis CI',
+      ? `${product.title} — ${product.price.toLocaleString('fr-FR')} ${product.currency} | PC Paradis`
+      : 'PC Paradis',
     description: product
       ? product.description?.slice(0, 155) ||
-        `${product.title} ${product.condition_display} ${product.brand_name ?? ''} à ${product.city || 'Abidjan'} sur PC Paradis CI.`
+        `${product.title} ${product.condition_display} ${product.brand_name ?? ''} à ${product.city || 'Abidjan'} sur PC Paradis.`
       : 'Annonces PC Hardware & Gaming à Abidjan, Côte d’Ivoire.',
     url: window.location.href,
     image: images[0]?.image ?? product?.image ?? null,

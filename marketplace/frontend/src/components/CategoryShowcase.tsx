@@ -1,27 +1,85 @@
 import { Link } from 'react-router-dom'
-import { ArrowRight } from 'lucide-react'
+import {
+  Armchair,
+  ArrowRight,
+  BatteryCharging,
+  Cable,
+  CarFront,
+  CircuitBoard,
+  Computer,
+  Cpu,
+  Droplets,
+  Fan,
+  Gamepad2,
+  HardDrive,
+  Headphones,
+  Joystick,
+  Keyboard,
+  Laptop,
+  Lightbulb,
+  MemoryStick,
+  Microchip,
+  MicVocal,
+  Monitor,
+  MonitorCog,
+  Mouse,
+  MousePointer2,
+  Package,
+  PackageOpen,
+  PcCase,
+  Snowflake,
+  Table2,
+  Usb,
+  Webcam,
+  type LucideIcon,
+} from 'lucide-react'
 import { Skeleton } from '@/components/ui/Skeleton'
 import type { Category } from '@/types/product'
 import { cn } from '@/lib/utils'
 
-const ICON_MAP: Record<string, string> = {
-  cpu: '🖥️',
-  gpu: '🎮',
-  ram: '⚡',
-  storage: '💾',
-  monitor: '🖥️',
-  peripherals: '⌨️',
-  case: '📦',
-  psu: '🔌',
-  cooling: '❄️',
-  networking: '🌐',
-  audio: '🔊',
-  webcam: '📷',
-  default: '📦',
+const ICON_MAP: Record<string, LucideIcon> = {
+  cpu: Cpu,
+  gpu: MonitorCog,
+  'carte-mere': CircuitBoard,
+  ram: MemoryStick,
+  stockage: HardDrive,
+  alimentation: BatteryCharging,
+  boitier: PcCase,
+  ventilateurs: Fan,
+  watercooling: Droplets,
+  'refroidissement-cpu': Snowflake,
+  ecrans: Monitor,
+  claviers: Keyboard,
+  souris: Mouse,
+  casques: Headphones,
+  manettes: Gamepad2,
+  volants: CarFront,
+  joysticks: Joystick,
+  microphones: MicVocal,
+  webcams: Webcam,
+  cables: Cable,
+  'cables-rgb': Lightbulb,
+  adaptateurs: Usb,
+  'accessoires-pc': Laptop,
+  'tables-gaming': Table2,
+  'chaises-gaming': Armchair,
+  'tapis-de-souris': MousePointer2,
+  'composants-internes': Microchip,
+  'composants-externes': Computer,
+  accessoires: PackageOpen,
+  storage: HardDrive,
+  monitor: Monitor,
+  peripherals: Keyboard,
+  case: PcCase,
+  psu: BatteryCharging,
+  cooling: Snowflake,
+  networking: Usb,
+  audio: Headphones,
+  webcam: Webcam,
 }
 
-export function catIcon(slug: string): string {
-  return ICON_MAP[slug] ?? ICON_MAP.default
+export function catIcon(slug: string): LucideIcon {
+  return ICON_MAP[slug] ?? Package
 }
 
 export interface FlatCategory {
@@ -80,21 +138,26 @@ export function CategoryShowcase({ categories, loading, activeSlug, onSelect, cl
 
   return (
     <div className={cn('grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4', className)}>
-      {categories.map((cat) => (
-        <Link
-          key={cat.slug}
-          to={`/products?cat=${cat.slug}`}
-          onClick={onSelect ? () => onSelect(cat.slug) : undefined}
-          className={cn(
-            'card p-4 flex flex-col items-center text-center hover:border-primary-300 dark:hover:border-primary-700 hover:shadow-glow transition-all duration-200',
-            activeSlug === cat.slug && 'border-primary-500 dark:border-primary-500'
-          )}
-        >
-          <div className="text-2xl mb-2">{catIcon(cat.slug)}</div>
-          <div className="font-semibold text-sm text-gray-900 dark:text-white mb-0.5">{cat.name}</div>
-          <div className="text-xs text-gray-400">{cat.parentName}</div>
-        </Link>
-      ))}
+      {categories.map((cat) => {
+        const Icon = catIcon(cat.slug)
+        return (
+            <Link
+              key={cat.slug}
+              to={`/products?cat=${cat.slug}`}
+              onClick={onSelect ? () => onSelect(cat.slug) : undefined}
+              className={cn(
+                'card p-4 flex flex-col items-center text-center hover:border-primary-300 dark:hover:border-primary-700 hover:shadow-glow transition-all duration-200',
+                activeSlug === cat.slug && 'border-primary-500 dark:border-primary-500'
+              )}
+            >
+              <div className="mb-2 text-primary-500">
+                <Icon size={28} strokeWidth={1.75} aria-hidden="true" />
+              </div>
+              <div className="font-semibold text-sm text-gray-900 dark:text-white mb-0.5">{cat.name}</div>
+              <div className="text-xs text-gray-400">{cat.parentName}</div>
+            </Link>
+        )
+      })}
     </div>
   )
 }

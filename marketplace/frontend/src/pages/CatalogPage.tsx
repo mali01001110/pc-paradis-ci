@@ -52,7 +52,7 @@ export default function CatalogPage() {
   const page = Math.max(1, Number(searchParams.get('page')) || 1)
   const values = useMemo(() => parseValues(searchParams), [searchParams])
 
-  useSEO({ title: cat ? `${cat} — PC Paradis CI` : 'Catalogue — PC Paradis CI' })
+  useSEO({ title: cat ? `${cat} — PC Paradis` : 'Catalogue — PC Paradis' })
 
   const { data: optionsData } = useQuery({
     queryKey: ['filter-options', cat],
