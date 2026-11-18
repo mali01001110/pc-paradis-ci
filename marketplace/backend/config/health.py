@@ -1,4 +1,4 @@
-"""Health check endpoint — verifies backend, PostgreSQL and Redis."""
+"""Health check endpoint — verifies backend, PostgreSQL and cache."""
 import logging
 
 from django.db import connections
@@ -16,27 +16,27 @@ def _db_healthy():
         return False, str(exc)
 
 
-def _redis_healthy():
+def _cache_healthy():
     try:
         from django.core.cache import cache
         cache.set("healthcheck", "ok", 5)
         return cache.get("healthcheck") == "ok", "ok"
     except Exception as exc:  # noqa: BLE001
-        logger.exception("Redis health check failed")
+        logger.exception("Cache health check failed")
         return False, str(exc)
 
 
 def health_check(request):
     """Return service status for backend, database and cache."""
     db_ok, db_status = _db_healthy()
-    redis_ok, redis_status = _redis_healthy()
+    cache_ok, cache_status = _cache_healthy()
 
     payload = {
-        "status": "ok" if db_ok and redis_ok else "degraded",
+        "status": "ok" if db_ok and cache_ok else "degraded",
         "services": {
             "backend": {"status": "ok"},
             "postgresql": {"status": "ok" if db_ok else "error", "detail": db_status},
-            "redis": {"status": "ok" if redis_ok else "error", "detail": redis_status},
+            "cache": {"status": "ok" if cache_ok else "error", "detail": cache_status},
         },
     }
-    return JsonResponse(payload, status=200 if db_ok and redis_ok else 503)
+    return JsonResponse(payload, status=200 if db_ok and cache_ok else 503)

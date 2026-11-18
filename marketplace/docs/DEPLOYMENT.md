@@ -98,9 +98,12 @@ docker compose -f docker-compose.prod.yml exec backend python manage.py collects
 
 Le Blueprint à la racine du dépôt (`render.yaml`) configure l'API Django, un
 worker Celery et Celery Beat. Il réutilise PostgreSQL et Redis existants : aucun
-service de base de données ou de cache Render n'est créé. Les services Render
-sont configurés dans la région de Francfort et utilisent le plan `0.5c-512mb`
-(services payants; Celery nécessite un worker payant).
+service de base de données ou de cache Render n'est créé. Sans `REDIS_URL`, l'API
+utilise temporairement un cache en mémoire propre à chaque processus; les limites
+de requêtes et les caches ne sont alors pas partagés entre les workers et sont
+perdus au redémarrage. Redis reste nécessaire au broker Celery. Les services
+Render utilisent le plan `0.5c-512mb` (services payants; Celery nécessite un
+worker payant).
 
 1. Dans Render, créer un Blueprint pour ce dépôt et appliquer `render.yaml`.
 2. Renseigner les variables demandées dans le groupe `pc-paradis-production` :
@@ -112,7 +115,9 @@ sont configurés dans la région de Francfort et utilisent le plan `0.5c-512mb`
      de l'administrateur; `DJANGO_ADMIN_PASSWORD` est son mot de passe.
      L'application ne crée pas automatiquement le compte.
    - `REDIS_URL` : URL Redis/Valkey accessible depuis Render (`rediss://` si
-     TLS est requis). Elle alimente le cache Django et Celery.
+     TLS est requis). Elle alimente le cache partagé Django et Celery. Sans cette
+     variable, l'API utilise le cache mémoire local décrit ci-dessus; Celery ne
+     peut pas fonctionner sans broker Redis configuré.
    - `FRONTEND_URL`, `CORS_ALLOWED_ORIGINS` et `CSRF_TRUSTED_ORIGINS` :
      domaines publics du frontend (les origines doivent inclure `https://`).
    - SMTP : `EMAIL_HOST`, `EMAIL_HOST_USER` et `EMAIL_HOST_PASSWORD`.

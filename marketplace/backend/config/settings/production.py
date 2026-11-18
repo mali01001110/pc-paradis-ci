@@ -32,6 +32,16 @@ if DATABASE_URL:
     DATABASES["default"]["CONN_MAX_AGE"] = 60
     DATABASES["default"].setdefault("OPTIONS", {})["sslmode"] = DB_SSL_MODE
 
+# Use a process-local cache when Redis is not configured.
+REDIS_URL = env("REDIS_URL", default="")
+if REDIS_URL:
+    CACHES["default"]["LOCATION"] = REDIS_URL
+else:
+    CACHES["default"] = {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "pcparadis-production-cache",
+    }
+
 # Security headers & HTTPS
 SECURE_SSL_REDIRECT = True
 SESSION_COOKIE_SECURE = True
