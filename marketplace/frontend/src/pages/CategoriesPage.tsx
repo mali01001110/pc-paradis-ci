@@ -1,5 +1,8 @@
+import { useCallback, useEffect, useMemo } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { categoryService } from '@/services/productService'
+import { getErrorMessage } from '@/services/api'
 import { CategoryShowcase, CategoryShowcaseSkeleton } from '@/components/CategoryShowcase'
 import type { FlatCategory } from '@/components/CategoryShowcase'
 import type { Category } from '@/types/product'
@@ -42,12 +45,21 @@ function buildFamilies(tree: Category[]): FamilyGroup[] {
 }
 
 export default function CategoriesPage() {
-  const { data: categoryTree, isLoading } = useQuery({
+  const location = useLocation()
+  const { data: categoryTree, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['category-tree'],
     queryFn: async () => (await categoryService.getTree()).data,
+    staleTime: 1000 * 60 * 60 * 24,
+    retry: 1,
   })
 
-  const families = buildFamilies(categoryTree ?? [])
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [location.pathname])
+
+  const families = useMemo(() => buildFamilies(categoryTree ?? []), [categoryTree])
+
+  const retry = useCallback(() => refetch(), [refetch])
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
@@ -58,11 +70,22 @@ export default function CategoriesPage() {
         </p>
       </header>
 
-      {isLoading ? (
+      {isError ? (
+        <div className="card p-12 text-center">
+          <p className="text-red-500 mb-4">{getErrorMessage(error)}</p>
+          <button onClick={retry} className="btn-secondary text-sm">
+            Réessayer
+          </button>
+        </div>
+      ) : isLoading ? (
         <div className="space-y-12">
           {Array.from({ length: 3 }).map((_, i) => (
             <CategoryShowcaseSkeleton key={i} count={6} />
           ))}
+        </div>
+      ) : families.length === 0 ? (
+        <div className="card p-12 text-center">
+          <p className="text-gray-500 mb-4">Aucune catégorie disponible.</p>
         </div>
       ) : (
         <div className="space-y-16">

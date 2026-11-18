@@ -1,3 +1,7 @@
+/.kilo/
+/.vercel/
+/.vscode/
+/docs/
 /ECC/
 **/.env
 **/.env.*
@@ -12,4 +16,3 @@
 **/test-results/
 **/playwright-report/
 /marketplace/backend/media/
-.vercel

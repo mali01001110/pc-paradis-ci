@@ -33,8 +33,6 @@ export interface RegisterPayload {
   password: string
   password2: string
   terms_accepted: boolean
-  captcha_token: string
-  captcha_answer: string
   /** Honeypot — must stay empty. */
   website?: string
 }

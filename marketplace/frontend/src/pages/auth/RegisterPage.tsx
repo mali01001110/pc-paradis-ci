@@ -2,9 +2,9 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Link } from 'react-router-dom'
-import { useEffect, useState } from 'react'
-import { Eye, EyeOff, ShieldCheck } from 'lucide-react'
-import { authService, getErrorMessage, type CaptchaChallenge } from '@/services/api'
+import { useState } from 'react'
+import { Eye, EyeOff } from 'lucide-react'
+import { authService, getErrorMessage } from '@/services/api'
 import type { RegisterPayload } from '@/types/auth'
 
 const schema = z
@@ -18,7 +18,6 @@ const schema = z
     password: z.string().min(8, '8 caractères minimum').regex(/[A-Z]/, 'Une majuscule requise').regex(/[0-9]/, 'Un chiffre requis'),
     password2: z.string(),
     terms_accepted: z.boolean().refine((v) => v === true, 'Vous devez accepter les CGU'),
-    captcha_answer: z.string().min(1, 'Réponse obligatoire'),
     website: z.string().max(0, 'Requête refusée').optional(),
   })
   .refine((d) => d.password === d.password2, { message: 'Les mots de passe ne correspondent pas', path: ['password2'] })
@@ -28,33 +27,14 @@ type Form = z.infer<typeof schema>
 export default function RegisterPage() {
   const [showPw, setShowPw] = useState(false)
   const [globalError, setGlobalError] = useState('')
-  const [captcha, setCaptcha] = useState<CaptchaChallenge | null>(null)
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<Form>({ resolver: zodResolver(schema) })
 
-  const loadCaptcha = async () => {
-    try {
-      const resp = await authService.getCaptchaChallenge()
-      setCaptcha(resp.data)
-    } catch {
-      // Le formulaire restera bloqué côté serveur sans captcha valide.
-      setCaptcha(null)
-    }
-  }
-
-  useEffect(() => {
-    void loadCaptcha()
-  }, [])
-
   const onSubmit = async (data: Form) => {
     setGlobalError('')
-    if (!captcha) {
-      setGlobalError('Vérification anti-robot indisponible. Rechargez la page.')
-      return
-    }
     const payload: RegisterPayload = {
       email: data.email.toLowerCase(),
       first_name: data.first_name,
@@ -65,8 +45,6 @@ export default function RegisterPage() {
       password: data.password,
       password2: data.password2,
       terms_accepted: data.terms_accepted,
-      captcha_token: captcha.token,
-      captcha_answer: data.captcha_answer,
       website: data.website,
     }
     try {
@@ -74,7 +52,6 @@ export default function RegisterPage() {
       window.location.href = '/auth/login?registered=true'
     } catch (err) {
       setGlobalError(getErrorMessage(err))
-      void loadCaptcha()
     }
   }
 
@@ -150,21 +127,6 @@ export default function RegisterPage() {
             <label htmlFor="reg-password2" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirmer le mot de passe</label>
             <input id="reg-password2" {...register('password2')} type={showPw ? 'text' : 'password'} className="input-field" placeholder="Confirmez" />
             {errors.password2 && <p className="mt-1 text-xs text-red-500">{errors.password2.message}</p>}
-          </div>
-
-          {/* CAPTCHA anti-robot */}
-          <div>
-            <label htmlFor="reg-captcha" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              <ShieldCheck size={14} className="inline mr-1 text-primary-600" />
-              Vérification anti-robot
-            </label>
-            <div className="flex items-center gap-3">
-              <span className="flex-shrink-0 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-bold text-lg font-display rounded-lg px-4 py-2.5 border border-primary-100 dark:border-primary-900 select-none">
-                {captcha ? `${captcha.question} = ?` : '…'}
-              </span>
-              <input id="reg-captcha" {...register('captcha_answer')} className="input-field" placeholder="Votre réponse" inputMode="numeric" />
-            </div>
-            {errors.captcha_answer && <p className="mt-1 text-xs text-red-500">{errors.captcha_answer.message}</p>}
           </div>
 
           {/* Honeypot : champ invisible, les bots le remplissent */}

@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { MapPin, Phone } from 'lucide-react'
 import { Badge, type BadgeProps } from '@/components/ui/Badge'
@@ -28,10 +29,15 @@ export default function ProductCard({ product, className }: Props) {
   const src = primaryImage?.image ?? product.image
   const phone = product.phone
   const whatsapp = product.whatsapp || product.phone
-  const waHref =
-    whatsapp && whatsapp.trim()
-      ? `https://wa.me/${normalizePhone(whatsapp).replace('+', '')}?text=${encodeURIComponent(WA_MESSAGE(product.title))}`
-      : null
+  const waHref = useMemo(
+    () =>
+      whatsapp && whatsapp.trim()
+        ? `https://wa.me/${normalizePhone(whatsapp).replace('+', '')}?text=${encodeURIComponent(
+            WA_MESSAGE(product.title)
+          )}`
+        : null,
+    [whatsapp, product.title]
+  )
 
   return (
     <div className={cn('card group overflow-hidden hover:shadow-glow transition-all duration-200 flex flex-col', className)}>

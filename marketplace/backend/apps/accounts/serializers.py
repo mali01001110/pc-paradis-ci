@@ -2,18 +2,15 @@
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 
-from . import captcha
 from .models import Seller, SellerProfile
 
 
 class RegisterSerializer(serializers.ModelSerializer):
-    """Seller registration (spec §6), protected by arithmetic CAPTCHA + honeypot."""
+    """Seller registration (spec §6), protected by a honeypot."""
 
     password = serializers.CharField(write_only=True, validators=[validate_password])
     password2 = serializers.CharField(write_only=True)
     terms_accepted = serializers.BooleanField()
-    captcha_token = serializers.CharField(write_only=True)
-    captcha_answer = serializers.CharField(write_only=True, trim_whitespace=True)
     # Honeypot: real users never see or fill this field.
     website = serializers.CharField(required=False, allow_blank=True, write_only=True)
 
@@ -29,8 +26,6 @@ class RegisterSerializer(serializers.ModelSerializer):
             "password",
             "password2",
             "terms_accepted",
-            "captcha_token",
-            "captcha_answer",
             "website",
         )
 
@@ -43,19 +38,11 @@ class RegisterSerializer(serializers.ModelSerializer):
             )
         # Honeypot: any value means a bot filled the hidden field.
         if attrs.get("website"):
-            raise serializers.ValidationError(
-                {"captcha_answer": "Validation anti-robot échouée. Veuillez réessayer."}
-            )
-        if not captcha.verify_challenge(attrs.get("captcha_token"), attrs.get("captcha_answer")):
-            raise serializers.ValidationError(
-                {"captcha_answer": "Vérification anti-robot échouée. Merci de réessayer."}
-            )
+            raise serializers.ValidationError({"website": "Requête refusée."})
         return attrs
 
     def create(self, validated_data):
         validated_data.pop("password2")
-        validated_data.pop("captcha_token")
-        validated_data.pop("captcha_answer")
         validated_data.pop("website", None)
         terms = validated_data.pop("terms_accepted")
         seller = Seller.objects.create_user(**validated_data)

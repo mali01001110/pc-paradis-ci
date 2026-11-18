@@ -7,7 +7,6 @@ from . import views
 app_name = "accounts"
 
 urlpatterns = [
-    path("auth/captcha/", views.CaptchaChallengeView.as_view(), name="captcha"),
     path("auth/register/", views.RegisterView.as_view(), name="register"),
     path("auth/verify-email/<str:token>/", views.VerifyEmailView.as_view(), name="verify-email"),
     path("auth/resend-verification/", views.ResendVerificationView.as_view(), name="resend-verification"),

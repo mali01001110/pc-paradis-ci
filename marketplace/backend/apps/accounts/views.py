@@ -11,7 +11,7 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from . import captcha, services
+from . import services
 from .models import Seller, SellerProfile, SellerStatus
 from .permissions import IsSelf
 from .serializers import (
@@ -27,18 +27,6 @@ from .serializers import (
 )
 
 SellerModel = get_user_model()
-
-
-class CaptchaChallengeView(APIView):
-    """Issue an arithmetic CAPTCHA challenge for the registration form (spec §45)."""
-
-    permission_classes = [AllowAny]
-    throttle_classes = [ScopedRateThrottle]
-    throttle_scope = "auth"
-
-    def get(self, request):
-        question, token = captcha.generate_challenge()
-        return Response({"question": question, "token": token})
 
 
 class RegisterView(APIView):

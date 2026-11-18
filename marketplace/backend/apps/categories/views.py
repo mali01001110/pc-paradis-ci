@@ -1,10 +1,14 @@
 """API views for the catalogue (spec §11, §30, §44)."""
+import logging
+
 from django.core.cache import cache
 from rest_framework import generics, permissions
 from rest_framework.response import Response
 
 from .models import AttributeDefinition, Brand, Category
 from .serializers import AttributeDefinitionSerializer, BrandSerializer, CategoryNodeSerializer, CategorySerializer
+
+logger = logging.getLogger(__name__)
 
 TREE_TTL = 60 * 60           # 1 h
 FILTER_OPTIONS_TTL = 30 * 60  # 30 min
@@ -28,7 +32,11 @@ class FilterOptionsView(generics.RetrieveAPIView):
     def retrieve(self, request, *args, **kwargs):
         category = self.get_object()
         cache_key = f"filter-options:{category.slug}"
-        data = cache.get(cache_key)
+        data = None
+        try:
+            data = cache.get(cache_key)
+        except Exception:
+            logger.warning("Cache get failed for key=%s", cache_key, exc_info=True)
         if data is None:
             definitions = AttributeDefinition.objects.filter(
                 category=category, filterable=True
@@ -47,7 +55,10 @@ class FilterOptionsView(generics.RetrieveAPIView):
                 filters.append(entry)
 
             data = {"category": category.slug, "filters": filters}
-            cache.set(cache_key, data, timeout=FILTER_OPTIONS_TTL)
+            try:
+                cache.set(cache_key, data, timeout=FILTER_OPTIONS_TTL)
+            except Exception:
+                logger.warning("Cache set failed for key=%s", cache_key, exc_info=True)
         return Response(data)
 
     def _distinct_values(self, definition: AttributeDefinition):
@@ -85,12 +96,19 @@ class CategoryTreeView(generics.ListAPIView):
 
     def list(self, request, *args, **kwargs):
         cache_key = "category-tree"
-        data = cache.get(cache_key)
+        data = None
+        try:
+            data = cache.get(cache_key)
+        except Exception:
+            logger.warning("Cache get failed for key=%s", cache_key, exc_info=True)
         if data is None:
             queryset = self.filter_queryset(self.get_queryset())
             serializer = self.get_serializer(queryset, many=True)
             data = serializer.data
-            cache.set(cache_key, data, timeout=TREE_TTL)
+            try:
+                cache.set(cache_key, data, timeout=TREE_TTL)
+            except Exception:
+                logger.warning("Cache set failed for key=%s", cache_key, exc_info=True)
         return Response(data)
 
 
@@ -127,10 +145,17 @@ class BrandListView(generics.ListCreateAPIView):
 
     def list(self, request, *args, **kwargs):
         cache_key = "brand-list"
-        data = cache.get(cache_key)
+        data = None
+        try:
+            data = cache.get(cache_key)
+        except Exception:
+            logger.warning("Cache get failed for key=%s", cache_key, exc_info=True)
         if data is None:
             queryset = self.filter_queryset(self.get_queryset())
             serializer = self.get_serializer(queryset, many=True)
             data = serializer.data
-            cache.set(cache_key, data, timeout=BRANDS_TTL)
+            try:
+                cache.set(cache_key, data, timeout=BRANDS_TTL)
+            except Exception:
+                logger.warning("Cache set failed for key=%s", cache_key, exc_info=True)
         return Response(data)

@@ -11,11 +11,6 @@ import type {
   SellerUpdatePayload,
 } from '@/types/auth'
 
-export interface CaptchaChallenge {
-  question: string
-  token: string
-}
-
 const API_ORIGIN = import.meta.env.VITE_API_URL?.replace(/\/+$/, '') ?? ''
 const API_BASE = `${API_ORIGIN}/api/v1`
 
@@ -60,9 +55,6 @@ apiClient.interceptors.response.use(
 )
 
 export const authService = {
-  getCaptchaChallenge: () =>
-    apiClient.get<CaptchaChallenge>('/auth/captcha/'),
-
   register: (payload: RegisterPayload) =>
     apiClient.post<RegisterResponse>('/auth/register/', payload),
 

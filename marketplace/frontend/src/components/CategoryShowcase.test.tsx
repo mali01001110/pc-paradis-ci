@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { catIcon } from './CategoryShowcase'
+import { render, screen } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
+import { CategoryShowcase, catIcon } from './CategoryShowcase'
 
 const childCategorySlugs = [
   'cpu',
@@ -37,5 +39,37 @@ describe('catIcon', () => {
 
     expect(icons).not.toContain(fallbackIcon)
     expect(new Set(icons).size).toBe(childCategorySlugs.length)
+  })
+})
+
+describe('CategoryShowcase', () => {
+  const categories = [
+    { id: '1', name: 'Processeurs', slug: 'cpu', parentName: 'Composants Internes' },
+    { id: '2', name: 'Cartes graphiques', slug: 'gpu', parentName: 'Composants Internes' },
+  ]
+
+  it('renders labelled cards by default', () => {
+    render(
+      <MemoryRouter>
+        <CategoryShowcase categories={categories} />
+      </MemoryRouter>
+    )
+
+    expect(screen.getByRole('link', { name: /Processeurs/ })).toHaveTextContent('Processeurs')
+  })
+
+  it('renders icon-only links with accessible names in the icon variant', () => {
+    render(
+      <MemoryRouter>
+        <CategoryShowcase categories={categories} variant="icon" activeSlug="gpu" />
+      </MemoryRouter>
+    )
+
+    const cpuLink = screen.getByRole('link', { name: 'Processeurs' })
+    const gpuLink = screen.getByRole('link', { name: 'Cartes graphiques' })
+
+    expect(cpuLink).toHaveAttribute('href', '/products?cat=cpu')
+    expect(cpuLink).toHaveTextContent('Processeurs')
+    expect(gpuLink).toHaveAttribute('aria-current', 'page')
   })
 })

@@ -23,4 +23,22 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom')) return 'vendor-react'
+            if (id.includes('lucide-react')) return 'vendor-lucide'
+            if (id.includes('@tanstack/react-query')) return 'vendor-query'
+            if (id.includes('axios')) return 'vendor-axios'
+            if (id.includes('embla-carousel-react')) return 'vendor-embla'
+            return 'vendor'
+          }
+          return undefined
+        },
+      },
+    },
+  },
 })

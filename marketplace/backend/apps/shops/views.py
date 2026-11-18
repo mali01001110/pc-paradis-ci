@@ -1,10 +1,14 @@
 """API views for shops (spec §10)."""
+import logging
+
 from django.core.cache import cache
 from rest_framework import generics, permissions
 from rest_framework.response import Response
 
 from .models import Shop
 from .serializers import ShopSerializer, MyShopSerializer
+
+logger = logging.getLogger(__name__)
 
 SHOP_TTL = 10 * 60  # 10 min
 
@@ -35,9 +39,16 @@ class PublicShopView(generics.RetrieveAPIView):
     def retrieve(self, request, *args, **kwargs):
         shop = self.get_object()
         cache_key = f"shop:{shop.slug}"
-        data = cache.get(cache_key)
+        data = None
+        try:
+            data = cache.get(cache_key)
+        except Exception:
+            logger.warning("Cache get failed for key=%s", cache_key, exc_info=True)
         if data is None:
             serializer = self.get_serializer(shop)
             data = serializer.data
-            cache.set(cache_key, data, timeout=SHOP_TTL)
+            try:
+                cache.set(cache_key, data, timeout=SHOP_TTL)
+            except Exception:
+                logger.warning("Cache set failed for key=%s", cache_key, exc_info=True)
         return Response(data)

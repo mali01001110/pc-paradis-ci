@@ -106,4 +106,12 @@ describe('CategoriesPage', () => {
 
     expect(screen.queryByText('Voir les produits')).not.toBeInTheDocument()
   })
+
+  it('scrolls window to top on mount', async () => {
+    const scrollTo = vi.spyOn(window, 'scrollTo')
+    renderWithProviders(<CategoriesPage />)
+    await screen.findByRole('heading', { name: 'Composants Internes' })
+    expect(scrollTo).toHaveBeenCalledWith(0, 0)
+    scrollTo.mockRestore()
+  })
 })

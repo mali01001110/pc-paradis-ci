@@ -51,9 +51,6 @@ const fr = {
   register: {
     title: 'Créer mon espace vendeur',
     subtitle: 'Gratuit. Sans commission. Sans engagement.',
-    captchaLabel: 'Vérification anti-robot',
-    captchaPlaceholder: 'Votre réponse',
-    captchaError: 'Vérification anti-robot échouée. Merci de réessayer.',
     submit: 'Créer mon espace',
     submitting: 'Création…',
   },

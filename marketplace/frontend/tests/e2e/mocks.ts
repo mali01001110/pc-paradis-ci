@@ -22,6 +22,38 @@ export const category = {
   ],
 }
 
+export const internalCategory = {
+  id: 'cat-internal',
+  name: 'Composants Internes',
+  slug: 'composants-internes',
+  parent: null,
+  description: '',
+  icon: 'cpu',
+  sort_order: 0,
+  children: [
+    {
+      id: 'cat-cpu',
+      name: 'Processeurs',
+      slug: 'cpu',
+      parent: 'cat-internal',
+      description: '',
+      icon: 'cpu',
+      sort_order: 0,
+      children: [],
+    },
+    {
+      id: 'cat-gpu',
+      name: 'Cartes graphiques',
+      slug: 'gpu',
+      parent: 'cat-internal',
+      description: '',
+      icon: 'gpu',
+      sort_order: 1,
+      children: [],
+    },
+  ],
+}
+
 export const product = {
   id: 'p-1',
   slug: 'asus-rog-strix-g16',
@@ -69,12 +101,6 @@ export const seller = {
 }
 
 export const tokens = { access: 'e2e-access-token', refresh: 'e2e-refresh-token' }
-
-export const captcha = {
-  token: 'e2e-captcha-token',
-  question: '12 + 7',
-  answer: '19',
-}
 
 export const adminProduct = {
   id: 'mp-1',
@@ -156,7 +182,7 @@ export const publicSellerList = {
 
 export async function mockApi(page: Page) {
   await page.route('**/api/v1/categories/', (route) =>
-    route.fulfill({ json: [category] })
+    route.fulfill({ json: [category, internalCategory] })
   )
   await page.route('**/api/v1/brands/', (route) => route.fulfill({ json: [] }))
   await page.route('**/api/v1/products/?*', (route) =>

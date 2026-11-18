@@ -103,7 +103,7 @@ cd frontend
 npm run test:e2e
 ```
 
-Les tests E2E couvrent : inscription + captcha, vérification email, connexion + MFA, catalogue/filtres, contact produit, publication produit, modération admin, signalements et page vendeurs. Ils fonctionnent avec des APIs mockées (`tests/e2e/mocks.ts`) — aucun backend requis.
+Les tests E2E couvrent : inscription, vérification email, connexion + MFA, catalogue/filtres, contact produit, publication produit, modération admin, signalements et page vendeurs. Ils fonctionnent avec des APIs mockées (`tests/e2e/mocks.ts`) — aucun backend requis.
 
 ### Commandes de gestion (backend)
 

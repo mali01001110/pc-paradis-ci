@@ -1,118 +1,18 @@
 import { Link, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Search, ArrowRight } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
-import { productService, categoryService } from '@/services/productService'
+import { useMemo, useState } from 'react'
+import { categoryService, productService } from '@/services/productService'
 import { getErrorMessage } from '@/services/api'
-import ProductCard from '@/components/ProductCard'
-import { ProductRow, ProductRowSlide } from '@/components/ProductRow'
-import { ProductGrid, ProductCardSkeleton } from '@/components/ProductGrid'
-import { CategoryShowcase, flattenCategories } from '@/components/CategoryShowcase'
-import { useProductRow } from '@/hooks/useProductRow'
-import type { ProductRowParams } from '@/hooks/useProductRow'
-import type { Product } from '@/types/product'
-
-const TOP_CATEGORY_SECTIONS = [
-  { title: 'Composants internes', slug: 'composants-internes' },
-  { title: 'Composants externes', slug: 'composants-externes' },
-  { title: 'Accessoires', slug: 'accessoires' },
-]
+import {
+  CategoryShowcase,
+  CategoryShowcaseSkeleton,
+  flattenCategories,
+} from '@/components/CategoryShowcase'
 
 // Homepage product/category queries stay fresh longer (10 min) to avoid
 // refetches on window focus and across the shared section/carousel queries.
 const HOME_STALE_TIME = 1000 * 60 * 10
-const SECTION_ROOT_MARGIN = '500px 0px'
-
-function useNearViewport() {
-  const ref = useRef<HTMLDivElement>(null)
-  const [isNearViewport, setIsNearViewport] = useState(false)
-
-  useEffect(() => {
-    const element = ref.current
-    if (!element) return
-
-    if (!('IntersectionObserver' in window)) {
-      setIsNearViewport(true)
-      return
-    }
-
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry?.isIntersecting) {
-        setIsNearViewport(true)
-        observer.disconnect()
-      }
-    }, { rootMargin: SECTION_ROOT_MARGIN })
-
-    observer.observe(element)
-    return () => observer.disconnect()
-  }, [])
-
-  return { ref, isNearViewport }
-}
-
-function CarouselSection({
-  title,
-  viewAllTo,
-  products,
-  loading,
-}: {
-  title: string
-  viewAllTo?: string
-  products?: Product[]
-  loading: boolean
-}) {
-  if (!loading && (!products || products.length === 0)) return null
-
-  return (
-    <ProductRow title={title} viewAllTo={viewAllTo} className="max-w-7xl mx-auto px-4 sm:px-6">
-      {loading || !products
-        ? Array.from({ length: 4 }).map((_, i) => (
-            <ProductRowSlide key={i}>
-              <ProductCardSkeleton />
-            </ProductRowSlide>
-          ))
-        : products.map((product) => (
-            <ProductRowSlide key={product.id}>
-              <ProductCard product={product} />
-            </ProductRowSlide>
-          ))}
-    </ProductRow>
-  )
-}
-
-function HomeProductRow({
-  title,
-  viewAllTo,
-  params,
-}: {
-  title: string
-  viewAllTo?: string
-  params: ProductRowParams
-}) {
-  const { ref, isNearViewport } = useNearViewport()
-  const query = useProductRow(params, {
-    staleTime: HOME_STALE_TIME,
-    enabled: isNearViewport,
-  })
-  const products = query.data?.results ?? []
-
-  if (isNearViewport && !query.isLoading && (query.isError || products.length === 0)) {
-    return null
-  }
-
-  return (
-    <div ref={ref} className={!isNearViewport ? 'min-h-[400px]' : undefined}>
-      {isNearViewport && (
-        <CarouselSection
-          title={title}
-          viewAllTo={viewAllTo}
-          products={products}
-          loading={query.isLoading}
-        />
-      )}
-    </div>
-  )
-}
 
 export default function HomePage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -120,60 +20,57 @@ export default function HomePage() {
 
   const catParam = searchParams.get('cat') ?? ''
   const queryParam = searchParams.get('q') ?? ''
-  const isFiltered = Boolean(catParam || queryParam)
 
-  const { data: filtered, isError, isLoading: filteredIsLoading } = useQuery({
-    queryKey: ['products', catParam, queryParam],
-    queryFn: async () => {
-      const params: Record<string, string> = {}
-      if (catParam) params['category'] = catParam
-      if (queryParam) params['q'] = queryParam
-      params['ordering'] = '-created_at'
-      return (await productService.listProducts(params)).data
-    },
-    staleTime: HOME_STALE_TIME,
-    enabled: isFiltered,
-  })
-
-  const { data: categoryTree, isLoading: treeLoading } = useQuery({
+  const {
+    data: categoryTree,
+    isLoading: treeLoading,
+    isError: categoryTreeError,
+    error: categoryTreeFetchError,
+    refetch: refetchCategories,
+  } = useQuery({
     queryKey: ['category-tree'],
     queryFn: async () => (await categoryService.getTree()).data,
     staleTime: HOME_STALE_TIME,
   })
 
-  const recents = useProductRow({ ordering: '-created_at' }, { staleTime: HOME_STALE_TIME })
-  const flatCats = flattenCategories(categoryTree ?? [])
-  const childCategoryCount = (categoryTree ?? []).reduce(
-    (count, parent) => count + (parent.children?.length ?? 0),
-    0
+  const { data: productCountData, isLoading: productCountLoading } = useQuery({
+    queryKey: ['product-count'],
+    queryFn: () => productService.listProducts({ page_size: '1' }),
+    staleTime: HOME_STALE_TIME,
+  })
+
+  const flatCats = useMemo(() => flattenCategories(categoryTree ?? []), [categoryTree])
+  const productSubcategoryCount = useMemo(
+    () =>
+      (categoryTree ?? []).reduce(
+        (count, parent) => count + (parent.children?.length ?? 0),
+        0
+      ),
+    [categoryTree]
   )
 
-  const internalCats: { id: string; name: string; slug: string; parentName: string }[] = (() => {
-    const node = (categoryTree ?? []).find((c) => c.slug === 'composants-internes')
-    if (!node?.children?.length) return []
-    return node.children.map((child) => ({
-      id: child.id,
-      name: child.name,
-      slug: child.slug,
-      parentName: node.name,
-    }))
-  })()
+  const internalCats = useMemo(
+    (): { id: string; name: string; slug: string; parentName: string }[] => {
+      const node =
+        (categoryTree ?? []).find((c) => c.slug === 'composants-internes') ??
+        (categoryTree ?? []).find((c) => c.name.toLowerCase().includes('composants internes'))
+      if (!node?.children?.length) return []
+      return node.children.map((child) => ({
+        id: child.id,
+        name: child.name,
+        slug: child.slug,
+        parentName: node.name,
+      }))
+    },
+    [categoryTree]
+  )
 
-  const getProducts = <T extends { results?: Product[] }>(query: { data?: T; isLoading: boolean; isError: boolean }, fallback: Product[]) =>
-    !query.isLoading && !query.isError && (query.data?.results?.length ?? 0) > 0 ? query.data!.results! : fallback
-
-  const recentProducts: Product[] = getProducts(recents, [])
-  const showProductRows = recents.isError || (recents.data?.count ?? 0) > 0
   const categoryName = (slug: string) => {
     const found = flatCats.find((c) => c.slug === slug)
     if (found) return found.name
     const topLevel = categoryTree?.find((c) => c.slug === slug)
     return topLevel?.name ?? slug
   }
-
-  const filteredResults: Product[] = filtered?.results ?? []
-
-  const gridLoading = filteredIsLoading || (filtered == null && !isError)
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -267,15 +164,21 @@ export default function HomePage() {
           <div className="flex flex-wrap justify-center gap-8 mt-14 text-sm text-gray-300">
             <div className="text-center">
               <div className="text-2xl font-bold text-white font-display">
-                {recents.data?.count.toLocaleString('fr-FR') ?? (recents.isError ? 'Indisponible' : '…')}
+                {productCountLoading
+                  ? '…'
+                  : productCountData?.data.count.toLocaleString('fr-FR') ?? '0'}
               </div>
               <div>Annonces</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-white font-display">
-                {childCategoryCount.toLocaleString('fr-FR')}
+                {treeLoading
+                  ? '…'
+                  : categoryTreeError
+                    ? 'Indisponible'
+                    : productSubcategoryCount.toLocaleString('fr-FR')}
               </div>
-              <div>Catégories</div>
+              <div>Sous-catégories de produits</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-white font-display">100%</div>
@@ -285,118 +188,34 @@ export default function HomePage() {
         </div>
       </section>
 
-      {isFiltered ? (
-        /* Filtered results view */
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="section-title">
-              {queryParam ? `Résultats pour "${queryParam}"` :
-               categoryName(catParam)}
-              <span className="text-gray-400 text-base ml-2">({filtered?.count ?? filteredResults.length})</span>
-            </h2>
-          </div>
-
-          <ProductGrid products={filteredResults} loading={gridLoading} />
-
-          {isError && (
-            <div className="card p-12 text-center">
-              <p className="text-red-500 mb-4">
-                {getErrorMessage(filtered) || "Une erreur est survenue lors de la recherche."}
-              </p>
-              <button onClick={() => window.location.reload()} className="btn-secondary text-sm">
-                Réessayer
-              </button>
-            </div>
-          )}
-
-          {!isError && filteredResults.length === 0 && !gridLoading && (
-            <div className="card p-12 text-center">
-              <p className="text-gray-500 mb-4">
-                {queryParam
-                  ? `Aucun résultat pour "${queryParam}".`
-                  : 'Aucun produit dans cette catégorie.'}
-              </p>
-              {queryParam && (
-                <p className="text-sm text-gray-400 mb-4">
-                  Essayez des termes plus courts ou plus généraux.
-                </p>
-              )}
-              <Link to="/" className="btn-secondary text-sm inline-flex items-center gap-2">
-                Voir tous les produits <ArrowRight size={14} />
-              </Link>
-            </div>
-          )}
-        </section>
-      ) : (
-        <>
-          {/* 3. Catégories */}
-          {treeLoading || internalCats.length > 0 ? (
-            <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="section-title">Catégories</h2>
-                <Link to="/categories" className="text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 flex items-center gap-1">
-                  Voir tout
-                </Link>
-              </div>
-              <CategoryShowcase categories={internalCats} loading={treeLoading} activeSlug={catParam} />
-            </section>
-          ) : null}
-
-          {showProductRows && (
-            <>
-              {/* 4-6. Familles de produits */}
-              {TOP_CATEGORY_SECTIONS.map((sec) => (
-                <HomeProductRow
-                  key={sec.slug}
-                  title={sec.title}
-                  viewAllTo={`/products?cat=${sec.slug}`}
-                  params={{ category: sec.slug }}
-                />
-              ))}
-
-              {/* 7. Produits récents */}
-              <CarouselSection
-                title="Produits récents"
-                products={recentProducts}
-                loading={recents.isLoading}
-              />
-
-              {/* 8. Produits populaires */}
-              <HomeProductRow
-                title="Produits populaires"
-                params={{ ordering: '-views_count' }}
-              />
-
-              {/* 9-13. Sélections par catégorie */}
-              <HomeProductRow title="Cartes graphiques" viewAllTo="/products?cat=gpu" params={{ category: 'gpu' }} />
-              <HomeProductRow title="Processeurs" viewAllTo="/products?cat=cpu" params={{ category: 'cpu' }} />
-              <HomeProductRow title="Mémoire RAM" viewAllTo="/products?cat=ram" params={{ category: 'ram' }} />
-              <HomeProductRow title="Stockage" viewAllTo="/products?cat=stockage" params={{ category: 'stockage' }} />
-              <HomeProductRow title="Écrans" viewAllTo="/products?cat=ecrans" params={{ category: 'ecrans' }} />
-            </>
-          )}
-        </>
-      )}
-
-      {/* 13. CTA vendeur */}
-      <section className="bg-gradient-to-r from-primary-600 to-primary-700 mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-16 text-center">
-          <h2 className="text-2xl md:text-3xl font-bold text-white font-display mb-4">
-            Devenez vendeur sur PC Paradis
-          </h2>
-          <p className="text-primary-100 max-w-xl mx-auto mb-8">
-            Créez gratuitement votre espace, publiez vos annonces sans frais. Sans commission, sans abonnement. Contactez directement vos acheteurs par téléphone ou WhatsApp.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              to="/auth/register"
-              className="inline-flex items-center justify-center gap-2 bg-white text-primary-700 font-semibold px-6 py-3 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              Créer mon espace gratuitement
-              <ArrowRight size={16} />
-            </Link>
-          </div>
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="section-title">Catégories</h2>
+          <Link to="/categories" className="text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 flex items-center gap-1">
+            Voir tout
+          </Link>
         </div>
+        {categoryTreeError ? (
+          <div className="card p-8 text-center">
+            <p className="text-red-500 mb-4">{getErrorMessage(categoryTreeFetchError)}</p>
+            <button onClick={() => void refetchCategories()} className="btn-secondary text-sm">
+              Réessayer
+            </button>
+          </div>
+        ) : treeLoading ? (
+          <CategoryShowcaseSkeleton count={10} variant="icon" />
+        ) : internalCats.length === 0 ? (
+          <div className="card p-8 text-center">
+            <p className="text-gray-500 dark:text-gray-400 mb-4">
+              Aucune sous-catégorie de composants internes disponible.
+            </p>
+            <button onClick={() => void refetchCategories()} className="btn-secondary text-sm">
+              Actualiser
+            </button>
+          </div>
+        ) : (
+          <CategoryShowcase categories={internalCats} activeSlug={catParam} variant="icon" />
+        )}
       </section>
       {/* 14. Footer — géré par MainLayout */}
     </div>

@@ -6,8 +6,6 @@ from rest_framework import status
 
 from apps.accounts.models import Seller, SellerStatus
 
-from .test_captcha import solve_captcha
-
 
 def register_body(**overrides):
     base = {
@@ -26,7 +24,7 @@ def register_body(**overrides):
 
 
 def post_registration(api_client, **overrides):
-    payload = {**register_body(**overrides), **solve_captcha(api_client)}
+    payload = register_body(**overrides)
     return api_client.post(reverse("accounts:register"), payload, format="json")
 
 
@@ -51,6 +49,12 @@ def test_register_requires_matching_passwords(api_client):
 @pytest.mark.django_db
 def test_register_requires_terms_acceptance(api_client):
     resp = post_registration(api_client, terms_accepted=False)
+    assert resp.status_code == status.HTTP_400_BAD_REQUEST
+
+
+@pytest.mark.django_db
+def test_register_rejects_filled_honeypot(api_client):
+    resp = post_registration(api_client, website="http://spam.tld")
     assert resp.status_code == status.HTTP_400_BAD_REQUEST
 
 

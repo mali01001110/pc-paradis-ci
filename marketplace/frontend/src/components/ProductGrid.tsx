@@ -48,7 +48,9 @@ export function ProductGrid({ products, loading, skeletonCount = 6, columns = 3,
   return (
     <div className={cn('grid gap-4 md:gap-6', COLUMN_CLASSES[columns], className)}>
       {products.map((product) => (
-        <ProductCard key={product.id} product={product} />
+        <div key={product.id} style={{ contentVisibility: 'auto' }}>
+          <ProductCard product={product} />
+        </div>
       ))}
     </div>
   )
