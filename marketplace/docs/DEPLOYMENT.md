@@ -1,4 +1,4 @@
-# Déploiement PC Paradis CI
+# Déploiement PC Paradis
 
 Guide de mise en production (HTTPS, backups, monitoring).
 
