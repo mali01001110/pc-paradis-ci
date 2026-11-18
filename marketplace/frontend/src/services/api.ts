@@ -16,7 +16,8 @@ export interface CaptchaChallenge {
   token: string
 }
 
-const API_BASE = '/api/v1'
+const API_ORIGIN = import.meta.env.VITE_API_URL?.replace(/\/+$/, '') ?? ''
+const API_BASE = `${API_ORIGIN}/api/v1`
 
 export const apiClient = axios.create({
   baseURL: API_BASE,

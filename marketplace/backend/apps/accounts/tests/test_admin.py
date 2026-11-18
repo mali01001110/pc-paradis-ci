@@ -2,6 +2,7 @@
 from datetime import timedelta
 
 import pytest
+from django.conf import settings
 from django.test import Client
 from django.urls import reverse
 from django.utils import timezone
@@ -38,6 +39,9 @@ def _post_action(client, action, pks):
 
 @pytest.mark.django_db
 class TestSellerAdminPages:
+    def test_admin_uses_configured_url(self):
+        assert reverse("admin:index") == f"/{settings.DJANGO_ADMIN_URL}"
+
     def test_changelist_loads(self, admin_client):
         resp = admin_client.get(reverse("admin:accounts_seller_changelist"))
         assert resp.status_code == 200

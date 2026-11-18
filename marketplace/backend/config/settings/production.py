@@ -15,7 +15,10 @@ STORAGES = {
     },
 }
 
-ALLOWED_HOSTS = env("ALLOWED_HOSTS")
+ALLOWED_HOSTS = env("ALLOWED_HOSTS", default=[])
+render_external_hostname = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
+if render_external_hostname and render_external_hostname not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(render_external_hostname)
 
 # Production requires an explicit secret — fail fast rather than fall back
 # to the insecure dev default from base.py.
@@ -23,6 +26,11 @@ SECRET_KEY = env("DJANGO_SECRET_KEY")
 
 # Supabase requires SSL — enforce sslmode=require for the PostgreSQL connection.
 DB_SSL_MODE = env("DB_SSL_MODE", default="require")
+DATABASE_URL = env("DATABASE_URL", default="")
+if DATABASE_URL:
+    DATABASES["default"] = env.db_url_config(DATABASE_URL)
+    DATABASES["default"]["CONN_MAX_AGE"] = 60
+    DATABASES["default"].setdefault("OPTIONS", {})["sslmode"] = DB_SSL_MODE
 
 # Security headers & HTTPS
 SECURE_SSL_REDIRECT = True
@@ -51,8 +59,9 @@ AWS_SECRET_ACCESS_KEY = env("AWS_SECRET_ACCESS_KEY", default="")
 AWS_STORAGE_BUCKET_NAME = env("AWS_STORAGE_BUCKET_NAME", default="")
 AWS_S3_ENDPOINT_URL = env("AWS_S3_ENDPOINT_URL", default="")
 AWS_S3_REGION_NAME = env("AWS_S3_REGION_NAME", default="eu-west-1")
+AWS_S3_CUSTOM_DOMAIN = env("AWS_S3_CUSTOM_DOMAIN", default="")
 AWS_S3_FILE_OVERWRITE = False
-AWS_DEFAULT_ACL = "public-read"
+AWS_DEFAULT_ACL = None
 AWS_QUERYSTRING_AUTH = False
 
 if AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY and AWS_STORAGE_BUCKET_NAME:

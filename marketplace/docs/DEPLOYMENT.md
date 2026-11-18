@@ -93,3 +93,48 @@ docker compose -f docker-compose.prod.yml exec backend python manage.py collects
 - [ ] `python manage.py check --deploy` sans erreur
 - [ ] Cron backup.sh actif + restauration testée
 - [ ] `/api/health/` surveillé (HTTP 200)
+
+## Déployer le backend sur Render
+
+Le Blueprint à la racine du dépôt (`render.yaml`) configure l'API Django, un
+worker Celery et Celery Beat. Il réutilise PostgreSQL et Redis existants : aucun
+service de base de données ou de cache Render n'est créé. Les services Render
+sont configurés dans la région de Francfort et utilisent le plan `0.5c-512mb`
+(services payants; Celery nécessite un worker payant).
+
+1. Dans Render, créer un Blueprint pour ce dépôt et appliquer `render.yaml`.
+2. Renseigner les variables demandées dans le groupe `pc-paradis-production` :
+   - `DATABASE_URL` : URL PostgreSQL accessible depuis Render, avec SSL. Pour
+     Supabase, utiliser une URL de connexion ou de pooler accessible depuis
+     l'extérieur et encoder les caractères spéciaux du mot de passe.
+   - `DJANGO_ADMIN_URL` : chemin de l'interface d'administration, par exemple
+     `admin/`. `DJANGO_ADMIN_USERNAME` doit être l'adresse email de connexion
+     de l'administrateur; `DJANGO_ADMIN_PASSWORD` est son mot de passe.
+     L'application ne crée pas automatiquement le compte.
+   - `REDIS_URL` : URL Redis/Valkey accessible depuis Render (`rediss://` si
+     TLS est requis). Elle alimente le cache Django et Celery.
+   - `FRONTEND_URL`, `CORS_ALLOWED_ORIGINS` et `CSRF_TRUSTED_ORIGINS` :
+     domaines publics du frontend (les origines doivent inclure `https://`).
+   - SMTP : `EMAIL_HOST`, `EMAIL_HOST_USER` et `EMAIL_HOST_PASSWORD`.
+   - Stockage S3/R2 : `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`,
+     `AWS_STORAGE_BUCKET_NAME`, `AWS_S3_ENDPOINT_URL`,
+     `AWS_S3_REGION_NAME` et `AWS_S3_CUSTOM_DOMAIN`. Configurer le bucket et
+     son domaine pour la lecture publique des images; ne pas utiliser le
+     système de fichiers du service, qui est éphémère.
+3. Le Blueprint génère `DJANGO_SECRET_KEY`, lance les migrations avant le
+   déploiement web et vérifie `GET /api/health/`.
+4. Dans l'environnement de build du frontend, définir `VITE_API_URL` sur
+   l'origine Render de l'API (par exemple `https://pc-paradis-api.onrender.com`,
+   sans `/api/v1`), puis reconstruire le frontend.
+5. Pour créer manuellement le compte administrateur depuis le Shell du service
+   web, mapper les variables vers les noms attendus par Django :
+
+   ```sh
+   DJANGO_SUPERUSER_EMAIL="$DJANGO_ADMIN_USERNAME" \
+   DJANGO_SUPERUSER_PASSWORD="$DJANGO_ADMIN_PASSWORD" \
+   python manage.py createsuperuser --noinput --email "$DJANGO_ADMIN_USERNAME"
+   ```
+
+Pour un domaine API personnalisé, ajouter son nom d'hôte à `ALLOWED_HOSTS` et
+son origine HTTPS à `CSRF_TRUSTED_ORIGINS`. Render ajoute automatiquement son
+propre nom d'hôte à `ALLOWED_HOSTS`.

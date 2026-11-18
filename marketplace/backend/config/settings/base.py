@@ -5,6 +5,7 @@ Environment-specific settings live in development.py, production.py and test.py.
 Sensitive values are read from environment variables and never hardcoded.
 """
 import os
+import ssl
 from datetime import timedelta
 from pathlib import Path
 
@@ -17,6 +18,7 @@ env = environ.Env(
     DEBUG=(bool, False),
     ALLOWED_HOSTS=(list, ["localhost", "127.0.0.1", "0.0.0.0"]),
     CORS_ALLOWED_ORIGINS=(list, ["http://localhost:5173", "http://127.0.0.1:5173"]),
+    DJANGO_ADMIN_URL=(str, "admin/"),
     DB_ENGINE=(str, "django.db.backends.postgresql"),
     DB_NAME=(str, "pc_paradis"),
     DB_USER=(str, "postgres"),
@@ -24,8 +26,8 @@ env = environ.Env(
     DB_HOST=(str, "db"),
     DB_PORT=(str, "5432"),
     REDIS_URL=(str, "redis://redis:6379/0"),
-    CELERY_BROKER_URL=(str, "redis://redis:6379/0"),
-    CELERY_RESULT_BACKEND=(str, "redis://redis:6379/0"),
+    CELERY_BROKER_URL=(str, ""),
+    CELERY_RESULT_BACKEND=(str, ""),
     SUPABASE_URL=(str, ""),
     SUPABASE_ANON_KEY=(str, ""),
     SUPABASE_SERVICE_ROLE_KEY=(str, ""),
@@ -57,6 +59,10 @@ SUPABASE_SERVICE_ROLE_KEY = env("SUPABASE_SERVICE_ROLE_KEY")
 DEBUG = env("DEBUG")
 
 ALLOWED_HOSTS = env("ALLOWED_HOSTS")
+DJANGO_ADMIN_URL = env("DJANGO_ADMIN_URL").strip("/")
+if not DJANGO_ADMIN_URL:
+    raise ValueError("DJANGO_ADMIN_URL must be a non-empty path.")
+DJANGO_ADMIN_URL = f"{DJANGO_ADMIN_URL}/"
 
 # Application definition
 INSTALLED_APPS = [
@@ -75,6 +81,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "django_filters",
     "drf_spectacular",
+    "storages",
     "django_celery_beat",
     # Local apps
     "apps.accounts",
@@ -247,8 +254,12 @@ EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
 
 # Celery
-CELERY_BROKER_URL = env("CELERY_BROKER_URL")
-CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND")
+CELERY_BROKER_URL = env("CELERY_BROKER_URL") or env("REDIS_URL")
+CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND") or env("REDIS_URL")
+if CELERY_BROKER_URL.startswith("rediss://"):
+    CELERY_BROKER_USE_SSL = {"ssl_cert_reqs": ssl.CERT_REQUIRED}
+if CELERY_RESULT_BACKEND.startswith("rediss://"):
+    CELERY_REDIS_BACKEND_USE_SSL = {"ssl_cert_reqs": ssl.CERT_REQUIRED}
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"

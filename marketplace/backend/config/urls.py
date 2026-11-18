@@ -29,7 +29,7 @@ def robots_txt(request):
         "Allow: /",
         "Disallow: /seller",
         "Disallow: /auth",
-        "Disallow: /admin/",
+        f"Disallow: /{settings.DJANGO_ADMIN_URL}",
         "Disallow: /api/",
         f"Sitemap: {settings.FRONTEND_URL}/sitemap.xml",
     ]
@@ -37,7 +37,7 @@ def robots_txt(request):
 
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
+    path(settings.DJANGO_ADMIN_URL, admin.site.urls),
     # Health check
     path("api/health/", health.health_check, name="health"),
     # SEO (spec §47)

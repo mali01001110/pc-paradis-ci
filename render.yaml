@@ -1,0 +1,88 @@
+envVarGroups:
+  - name: pc-paradis-production
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings.production
+      - key: DEBUG
+        value: "false"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_ADMIN_URL
+        value: admin/
+      - key: DJANGO_ADMIN_USERNAME
+        sync: false
+      - key: DJANGO_ADMIN_PASSWORD
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: CSRF_TRUSTED_ORIGINS
+        sync: false
+      - key: EMAIL_BACKEND
+        value: django.core.mail.backends.smtp.EmailBackend
+      - key: EMAIL_HOST
+        sync: false
+      - key: EMAIL_PORT
+        value: "587"
+      - key: EMAIL_USE_TLS
+        value: "true"
+      - key: EMAIL_HOST_USER
+        sync: false
+      - key: EMAIL_HOST_PASSWORD
+        sync: false
+      - key: DEFAULT_FROM_EMAIL
+        value: PC Paradis <no-reply@pcparadis.ci>
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_STORAGE_BUCKET_NAME
+        sync: false
+      - key: AWS_S3_ENDPOINT_URL
+        sync: false
+      - key: AWS_S3_REGION_NAME
+        sync: false
+      - key: AWS_S3_CUSTOM_DOMAIN
+        sync: false
+
+services:
+  - type: web
+    name: pc-paradis-api
+    runtime: docker
+    plan: 0.5c-512mb
+    region: frankfurt
+    dockerfilePath: ./marketplace/backend/Dockerfile
+    dockerContext: ./marketplace/backend
+    dockerCommand: >-
+      sh -c 'exec gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 3 --timeout 60'
+    preDeployCommand: python manage.py migrate --noinput
+    healthCheckPath: /api/health/
+    envVars:
+      - fromGroup: pc-paradis-production
+
+  - type: worker
+    name: pc-paradis-celery
+    runtime: docker
+    plan: 0.5c-512mb
+    region: frankfurt
+    dockerfilePath: ./marketplace/backend/Dockerfile
+    dockerContext: ./marketplace/backend
+    dockerCommand: celery -A config.celery worker --loglevel=info
+    envVars:
+      - fromGroup: pc-paradis-production
+
+  - type: worker
+    name: pc-paradis-celery-beat
+    runtime: docker
+    plan: 0.5c-512mb
+    region: frankfurt
+    dockerfilePath: ./marketplace/backend/Dockerfile
+    dockerContext: ./marketplace/backend
+    dockerCommand: celery -A config.celery beat --loglevel=info
+    envVars:
+      - fromGroup: pc-paradis-production
