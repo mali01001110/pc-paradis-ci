@@ -21,6 +21,24 @@ def test_seed_creates_categories(seeded_catalogue):
 
 
 @pytest.mark.django_db
+def test_seed_catalogue_is_idempotent():
+    call_command("seed_catalogue")
+    initial_counts = (
+        Category.objects.count(),
+        Brand.objects.count(),
+        AttributeDefinition.objects.count(),
+    )
+
+    call_command("seed_catalogue")
+
+    assert (
+        Category.objects.count(),
+        Brand.objects.count(),
+        AttributeDefinition.objects.count(),
+    ) == initial_counts
+
+
+@pytest.mark.django_db
 def test_seed_storage_is_single_category(seeded_catalogue):
     """Storage must be ONE category — no SSD/NVMe/HDD split (spec §12)."""
     assert Category.objects.filter(slug="ssd").count() == 0
