@@ -1,8 +1,6 @@
 """Production settings — hardened per django-security."""
 import os
 
-from django.core.exceptions import ImproperlyConfigured
-
 from .base import *  # noqa: F401,F403
 from .base import env
 
@@ -34,16 +32,19 @@ if DATABASE_URL:
     DATABASES["default"]["CONN_MAX_AGE"] = 60
     DATABASES["default"].setdefault("OPTIONS", {})["sslmode"] = DB_SSL_MODE
 
-# Production requires Redis for shared cache and request throttling.
+# Use Redis whenever configured; Docker builds may not receive runtime env vars.
 REDIS_URL = env("REDIS_URL", default="")
-if not REDIS_URL:
-    raise ImproperlyConfigured("REDIS_URL must be configured in production.")
-
-CACHES["default"] = {
-    "BACKEND": "django.core.cache.backends.redis.RedisCache",
-    "LOCATION": REDIS_URL,
-    "KEY_PREFIX": "pcparadis",
-}
+if REDIS_URL:
+    CACHES["default"] = {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": REDIS_URL,
+        "KEY_PREFIX": "pcparadis",
+    }
+else:
+    CACHES["default"] = {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "pcparadis-production-cache",
+    }
 
 # Security headers & HTTPS
 SECURE_SSL_REDIRECT = True
