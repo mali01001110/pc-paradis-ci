@@ -101,7 +101,7 @@ class CategoryTreeView(generics.ListAPIView):
             data = cache.get(cache_key)
         except Exception:
             logger.warning("Cache get failed for key=%s", cache_key, exc_info=True)
-        if data is None:
+        if not data:
             queryset = self.filter_queryset(self.get_queryset())
             serializer = self.get_serializer(queryset, many=True)
             data = serializer.data

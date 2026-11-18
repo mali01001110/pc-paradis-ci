@@ -60,7 +60,8 @@ services:
     dockerfilePath: ./marketplace/backend/Dockerfile
     dockerContext: ./marketplace/backend
     dockerCommand: >-
-      sh -c 'exec gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 3 --timeout 60'
+      sh -c 'python manage.py seed_catalogue &&
+      exec gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 3 --timeout 60'
     preDeployCommand: >-
       python manage.py migrate --noinput &&
       python manage.py seed_catalogue

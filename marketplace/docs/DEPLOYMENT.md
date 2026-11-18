@@ -127,9 +127,11 @@ le plan `0.5c-512mb` (services payants; Celery nécessite un worker payant).
      `AWS_S3_REGION_NAME` et `AWS_S3_CUSTOM_DOMAIN`. Configurer le bucket et
      son domaine pour la lecture publique des images; ne pas utiliser le
      système de fichiers du service, qui est éphémère.
-3. Le Blueprint génère `DJANGO_SECRET_KEY`, lance les migrations puis charge le
-   catalogue initial de façon idempotente avant le déploiement web, et vérifie
-   `GET /api/health/`.
+3. Le Blueprint génère `DJANGO_SECRET_KEY` et lance les migrations puis le
+   chargement idempotent du catalogue avant le déploiement web. Le conteneur web
+   relance aussi ce chargement au démarrage, afin que les offres Render sans
+   commande de pré-déploiement disponible n'aient pas besoin d'un Shell. Le
+   service vérifie `GET /api/health/`.
 4. Dans l'environnement de build du frontend, définir `VITE_API_URL` sur
    l'origine Render de l'API (par exemple `https://pc-paradis-api.onrender.com`,
    sans `/api/v1`), puis reconstruire le frontend.

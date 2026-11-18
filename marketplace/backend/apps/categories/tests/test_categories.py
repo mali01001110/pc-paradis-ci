@@ -1,5 +1,6 @@
 """Tests for the catalogue API (spec §11, §30, §53)."""
 import pytest
+from django.core.cache import cache
 from django.core.management import call_command
 from django.urls import reverse
 from rest_framework import status
@@ -71,6 +72,16 @@ def test_category_tree_api(api_client, seeded_catalogue):
     composants_externes = next(c for c in resp.data if c["slug"] == "composants-externes")
     assert any(child["slug"] == "chaises-gaming" for child in accessoires["children"])
     assert not any(child["slug"] == "chaises-gaming" for child in composants_externes["children"])
+
+
+@pytest.mark.django_db
+def test_category_tree_api_refreshes_cached_empty_result(api_client, seeded_catalogue):
+    cache.set("category-tree", [], timeout=3600)
+
+    resp = api_client.get(reverse("categories:category-tree"))
+
+    assert resp.status_code == status.HTTP_200_OK
+    assert any(category["slug"] == "composants-internes" for category in resp.data)
 
 
 @pytest.mark.django_db
