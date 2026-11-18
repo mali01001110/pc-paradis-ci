@@ -126,7 +126,9 @@ export default function App() {
         path="/admin"
         element={
           <AdminRoute>
-            <AdminLayout />
+            <Suspense fallback={<PageLoading />}>
+              <AdminLayout />
+            </Suspense>
           </AdminRoute>
         }
       >

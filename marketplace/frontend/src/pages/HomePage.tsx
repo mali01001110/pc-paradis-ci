@@ -153,7 +153,7 @@ export default function HomePage() {
             </Link>
             <Link
               to="/auth/register"
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-white text-primary-600 border border-primary-200 hover:bg-gray-100 transition-colors dark:bg-white dark:text-primary-600 dark:border-primary-200 dark:hover:bg-primary-50 px-8 py-3.5 text-base font-semibold"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary-600 text-white border border-primary-600 hover:bg-primary-700 transition-colors dark:bg-primary-600 dark:text-white dark:border-primary-600 dark:hover:bg-primary-700 px-8 py-3.5 text-base font-semibold"
             >
               Vendre gratuitement
               <ArrowRight size={16} />
