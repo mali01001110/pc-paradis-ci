@@ -54,6 +54,7 @@ services:
   - type: web
     name: pc-paradis-api
     runtime: docker
+    rootDir: .
     plan: 0.5c-512mb
     region: frankfurt
     dockerfilePath: ./marketplace/backend/Dockerfile
@@ -68,6 +69,7 @@ services:
   - type: worker
     name: pc-paradis-celery
     runtime: docker
+    rootDir: .
     plan: 0.5c-512mb
     region: frankfurt
     dockerfilePath: ./marketplace/backend/Dockerfile
@@ -79,6 +81,7 @@ services:
   - type: worker
     name: pc-paradis-celery-beat
     runtime: docker
+    rootDir: .
     plan: 0.5c-512mb
     region: frankfurt
     dockerfilePath: ./marketplace/backend/Dockerfile
