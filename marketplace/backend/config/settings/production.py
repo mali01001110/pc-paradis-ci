@@ -51,6 +51,11 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
 
+# The production frontend must be allowed even when the optional env var is unset.
+CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[])
+if "https://pc-paradis.vercel.app" not in CORS_ALLOWED_ORIGINS:
+    CORS_ALLOWED_ORIGINS.append("https://pc-paradis.vercel.app")
+
 # Keep the OpenAPI schema private in production unless explicitly enabled.
 SHOW_API_DOCS = env.bool("SHOW_API_DOCS", default=False)
 
