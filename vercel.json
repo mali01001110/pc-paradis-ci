@@ -1,0 +1,9 @@
+{
+  "installCommand": "npm install --prefix marketplace/frontend",
+  "buildCommand": "npm run build --prefix marketplace/frontend",
+  "outputDirectory": "marketplace/frontend/dist",
+  "framework": null,
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
